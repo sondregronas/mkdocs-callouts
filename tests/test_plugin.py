@@ -1,9 +1,6 @@
-import os
 import pytest
 
 from mkdocs_callouts.plugin import CalloutsPlugin
-
-module_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.fixture
