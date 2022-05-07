@@ -17,13 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Switch to Current Branch
-        run: git checkout ${{ env.BRANCH }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -38,4 +33,4 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest test_plugin.py
+          python -m pytest tests/test_plugin.py
