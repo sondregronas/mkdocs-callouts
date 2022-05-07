@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='mkdocs-callouts',
-    version='1.0.0',
+    version='1.1.0',
     description='A simple MkDocs plugin that converts Obsidian callout blocks to mkdocs supported Admonitions.',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,6 +16,7 @@ setup(
     license='AGPLv3',
     python_requires='>=3.6',
     install_requires=['mkdocs>=1'],
+    tests_require=["pytest"],
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={'mkdocs.plugins': [

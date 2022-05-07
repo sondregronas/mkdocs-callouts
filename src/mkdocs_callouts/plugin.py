@@ -15,43 +15,64 @@ from mkdocs.plugins import BasePlugin
 # Supports >[!INFO]- and >[!INFO]+ foldable callouts.
 
 
+def ParseBlockType(title):
+    """
+    Returns proper denotation and title for the callout block.
+    Expected results are [!!!, title] or [???|???+, title]
+    """
+    denotation = '!!!'
+    # Foldable callouts require a different denotation
+    try:
+        if title[0] == '-':
+            denotation = '???'
+            title = title[1:]
+            pass
+        if title[0] == '+':
+            denotation = '???+'
+            title = title[1:]
+        # Remove leading space
+        title = title[1:]
+    # If callout is untitled, pass.
+    except IndexError:
+        pass
+    return denotation, title
+
+
 class CalloutsPlugin(BasePlugin):
     def on_page_markdown(self, markdown, page, config, files):
-        # Loop through every callout block, starting from index 1.
-        for callout in markdown.split('> [!')[1::1]:
-            callout_end = callout.split('\n')[0]
+        # Read the markdown line for line
+        lines = markdown.split('\n')
 
-            # Store the original string, we will need to replace it later
-            original = f'> [!{callout_end}'
+        # Then we rebuild it, starting from scratch
+        markdown = ''
 
-            # Default denotation of admonitions
-            denotation = '!!!'
-            # Store admonition type
-            type = callout_end.split(']')[0]
-            # Store admonition title (and foldable identifier)
-            title = callout_end.split(']')[1]
+        # calloutBlock keeps track of whether or not the next line is
+        # part of the calloutBlock, or just a regular block.
+        calloutBlock = False
+        for line in lines:
+            # if line starts with callout syntax, parse it
+            if line.startswith('> [!'):
+                calloutBlock = True
 
-            # Foldable callouts require a different denotation
-            try:
-                if title[0] == '-':
-                    denotation = '???'
-                    title = title[1:]
-                    pass
-                if title[0] == '+':
-                    denotation = '???+'
-                    title = title[1:]
-                # Remove leading space
-                title = title[1:]
-            # If callout is untitled, pass.
-            except IndexError:
-                pass
+                type = line.split('> [!')[1].split(']')[0]
+                after = line.split(f'> [!{type}]')[1]
 
-            # Store the new string & replace it.
-            new = f'{denotation} {type.lower()} "{title}"'
-            markdown = markdown.replace(original, new, 1)
+                # Get proper denotation and title based on the text
+                # after the callout block.
+                denotation, title = ParseBlockType(after)
 
-        # Replace every callout indent to a 4 space admonition indent.
-        markdown = markdown.replace('\n> ', '\n    ')
+                # Syntax for admonition
+                new = f'{denotation} {type.lower()} "{title}"'
+                markdown += f'{new}\n'
+                continue
+
+            if line.startswith('> ') and calloutBlock:
+                markdown += f'{line.replace("> ", "    ")}\n'
+                continue
+
+            # If line is not part of a callout, render it like normal
+            markdown += f'{line}\n'
+            calloutBlock = False
 
         # Return the result
         return markdown

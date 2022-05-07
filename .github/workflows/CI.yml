@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: [3.8.6]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Switch to Current Branch
+        run: git checkout ${{ env.BRANCH }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest>=7.1.2
+
+      - name: Run unit tests
+        run: |
+          pytest test_plugin.py
