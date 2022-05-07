@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from mkdocs_callouts.plugin import CalloutsPlugin
