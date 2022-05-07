@@ -2,19 +2,20 @@ from mkdocs import utils as mkdocs_utils
 from mkdocs.config import config_options, Config
 from mkdocs.plugins import BasePlugin
 
-# Callouts To Admonitions converts the following:
+# Callouts converts the following obsidian callout block:
 #   > [!INFO] Title
 #   > An information callout from Obsidian
 #   > inspired by the syntax from the Microsoft Docs
 #
-# and turns it into:
+# and turns it into a mkdocs supported admonition:
 #   !!! info "Title"
 #       An admonition block for MkDocs.
 #       Allowing you to edit your notes
 #       with confidence using Obsidian.
+# Supports >[!INFO]- and >[!INFO]+ foldable callouts.
 
 
-class CalloutsToAdmonitionsPlugin(BasePlugin):
+class CalloutsPlugin(BasePlugin):
     def on_page_markdown(self, markdown, page, config, files):
         # Loop through every callout block, starting from index 1.
         for callout in markdown.split('> [!')[1::1]:
