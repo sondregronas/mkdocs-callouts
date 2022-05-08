@@ -3,7 +3,7 @@ from mkdocs.config import config_options, Config
 from mkdocs.plugins import BasePlugin
 
 from mkdocs_callouts.utils import (
-    ParseBlockType,
+    parse_callout,
 )
 
 
@@ -34,33 +34,33 @@ class CalloutsPlugin(BasePlugin):
         # Then we rebuild it, starting from scratch
         markdown = ''
 
-        # calloutBlock keeps track of whether or not the next line is
-        # part of the calloutBlock, or just a regular block.
-        calloutBlock = False
+        # isCallout keeps track of whether or not the next line is
+        # part of the callout box, or if it's just regular markdown.
+        isCallout = False
         for line in lines:
             # if line starts with callout syntax, parse it
             if line.startswith('> [!') and ']' in line:
-                calloutBlock = True
+                isCallout = True
 
                 type = line.split('> [!')[1].split(']')[0]
-                after = line.split(f'> [!{type}]')[1]
+                suffix = line.split(f'> [!{type}]')[1]
 
-                # Get proper denotation and title based on the text
-                # after the callout block.
-                denotation, title = ParseBlockType(after)
+                # Get the syntax and title based on the
+                # block suffix the callout block.
+                syntax, title = parse_callout(suffix)
 
-                # Syntax for admonition
-                new = f'{denotation} {type.lower()} "{title}"'
-                markdown += f'{new}\n'
+                # Syntax for admonition, type must be lowercase
+                markdown += f'{syntax} {type.lower()} "{title}"\n'
                 continue
 
-            if line.startswith('> ') and calloutBlock:
+            if line.startswith('> ') and isCallout:
                 markdown += f'{line.replace("> ", "    ")}\n'
                 continue
 
-            # If line is not part of a callout, render it like normal
+            # If the line is not part of a callout,
+            # add it back wihout any modifications
             markdown += f'{line}\n'
-            calloutBlock = False
+            isCallout = False
 
         # Return the result
         return markdown
