@@ -14,13 +14,14 @@ class CalloutsPlugin(BasePlugin):
        > An information callout from Obsidian
        > inspired by the syntax from the Microsoft Docs
 
-     and converts it into a mkdocs supported admonition:
+    and converts it into a mkdocs supported admonition:
        !!! info "Title"
            An admonition block for MkDocs.
            Allowing you to edit your notes
            with confidence using Obsidian.
 
-     Also Supports foldable callouts (> [!INFO]- and > [!INFO]+)
+    Also handles foldable callouts: > [!INFO]- Im foldable, closed
+                                    > [!INFO]+ Im foldable, open
     """
 
     def on_page_markdown(self, markdown, page, config, files):
@@ -31,7 +32,7 @@ class CalloutsPlugin(BasePlugin):
         # Read the markdown line for line
         lines = markdown.split('\n')
 
-        # Then we rebuild it, starting from scratch
+        # Then rebuild it, starting from scratch
         markdown = ''
 
         # isCallout keeps track of whether or not the next line is
@@ -58,7 +59,7 @@ class CalloutsPlugin(BasePlugin):
                 continue
 
             # If the line is not part of a callout,
-            # add it back wihout any modifications
+            # re-add it without modifications
             markdown += f'{line}\n'
             isCallout = False
 
