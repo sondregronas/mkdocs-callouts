@@ -1,10 +1,13 @@
-def parse_callout(title):
+def parse_callout(suffix):
     """
     Returns proper syntax and title for the callout block.
     Expected results are ['!!!', title] or ['???'|'???+', title]
     """
     syntax = '!!!'
-    # Foldable callouts use ???
+    title = suffix
+    # Check if the first character of the
+    # suffix defines a foldable callout.
+    # Lastly remove the leading space from title
     try:
         if title[0] == '-':
             syntax = '???'
@@ -15,7 +18,7 @@ def parse_callout(title):
             title = title[1:]
         # Remove leading space
         title = title[1:]
-    # If callout has no title, keep it as is.
+    # If title is empty, do nothing.
     except IndexError:
         pass
     return syntax, title
