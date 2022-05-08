@@ -41,6 +41,11 @@ def test_on_page_markdown(plugin):
             in plugin.on_page_markdown(test_markdown, None, None, None))
 
     # Test non-callout blocks
-    test_markdown = 'Some text\n> Block'
-    assert ('Some text\n> Block'
+    test_markdown = '> [!NOTE] Callout\n> Callout Text\nSome text\n> Block'
+    assert ('!!! note "Callout"\n    Callout Text\nSome text\n> Block'
+            in plugin.on_page_markdown(test_markdown, None, None, None))
+
+    # Test wikilink
+    test_markdown = '> [[Wikilink]] in a block\n> [Link](https://example.com)'
+    assert ('> [[Wikilink]] in a block\n> [Link](https://example.com)'
             in plugin.on_page_markdown(test_markdown, None, None, None))

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='mkdocs-callouts',
-    version='1.1.0',
+    version='1.1.1',
     description='A simple MkDocs plugin that converts Obsidian callout blocks to mkdocs supported Admonitions.',
     long_description=long_description,
     long_description_content_type="text/markdown",

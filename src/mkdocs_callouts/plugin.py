@@ -2,44 +2,32 @@ from mkdocs import utils as mkdocs_utils
 from mkdocs.config import config_options, Config
 from mkdocs.plugins import BasePlugin
 
-# Callouts converts the following obsidian callout block:
-#   > [!INFO] Title
-#   > An information callout from Obsidian
-#   > inspired by the syntax from the Microsoft Docs
-#
-# and turns it into a mkdocs supported admonition:
-#   !!! info "Title"
-#       An admonition block for MkDocs.
-#       Allowing you to edit your notes
-#       with confidence using Obsidian.
-# Supports >[!INFO]- and >[!INFO]+ foldable callouts.
-
-
-def ParseBlockType(title):
-    """
-    Returns proper denotation and title for the callout block.
-    Expected results are [!!!, title] or [???|???+, title]
-    """
-    denotation = '!!!'
-    # Foldable callouts require a different denotation
-    try:
-        if title[0] == '-':
-            denotation = '???'
-            title = title[1:]
-            pass
-        if title[0] == '+':
-            denotation = '???+'
-            title = title[1:]
-        # Remove leading space
-        title = title[1:]
-    # If callout is untitled, pass.
-    except IndexError:
-        pass
-    return denotation, title
+from mkdocs_callouts.utils import (
+    ParseBlockType,
+)
 
 
 class CalloutsPlugin(BasePlugin):
+    """
+    Reads your markdown docs for the following style of callout block:
+       > [!INFO] Title
+       > An information callout from Obsidian
+       > inspired by the syntax from the Microsoft Docs
+
+     and converts it into a mkdocs supported admonition:
+       !!! info "Title"
+           An admonition block for MkDocs.
+           Allowing you to edit your notes
+           with confidence using Obsidian.
+
+     Also Supports foldable callouts (> [!INFO]- and > [!INFO]+)
+    """
+
     def on_page_markdown(self, markdown, page, config, files):
+        # #save-the-cycles
+        if '> [!' not in markdown:
+            return markdown
+
         # Read the markdown line for line
         lines = markdown.split('\n')
 
@@ -51,7 +39,7 @@ class CalloutsPlugin(BasePlugin):
         calloutBlock = False
         for line in lines:
             # if line starts with callout syntax, parse it
-            if line.startswith('> [!'):
+            if line.startswith('> [!') and ']' in line:
                 calloutBlock = True
 
                 type = line.split('> [!')[1].split(']')[0]
