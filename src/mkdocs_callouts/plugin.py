@@ -2,6 +2,8 @@ from mkdocs import utils as mkdocs_utils
 from mkdocs.config import config_options, Config
 from mkdocs.plugins import BasePlugin
 
+import re
+
 from mkdocs_callouts.utils import (
     parse_callout,
 )
@@ -54,8 +56,13 @@ class CalloutsPlugin(BasePlugin):
                 markdown += f'{syntax} {type.lower()} "{title}"\n'
                 continue
 
-            if line.startswith('> ') and isCallout:
-                markdown += f'{line.replace("> ", "    ")}\n'
+            if line.startswith('>') and isCallout:
+                # find leading ">" or "> " and replace
+                # with 4 spaces, defining the callout content
+                regex = re.compile(r"^> {0,1}")
+                c_line = re.sub(regex, '    ', line)
+
+                markdown += f'{c_line}\n'
                 continue
 
             # If the line is not part of a callout,
