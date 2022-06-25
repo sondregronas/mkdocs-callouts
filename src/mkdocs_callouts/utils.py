@@ -12,7 +12,6 @@ def parse_callout(suffix):
         if title[0] == '-':
             syntax = '???'
             title = title[1:]
-            pass
         if title[0] == '+':
             syntax = '???+'
             title = title[1:]
