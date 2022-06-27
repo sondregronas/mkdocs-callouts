@@ -1,1 +1,2 @@
 mkdocs>=1
+pytest>=7.1.2
