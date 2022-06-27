@@ -5,7 +5,7 @@ from mkdocs.plugins import BasePlugin
 import re
 
 from mkdocs_callouts.utils import (
-    parse_callout,
+    parse_callout_title,
 )
 
 
@@ -28,7 +28,8 @@ class CalloutsPlugin(BasePlugin):
 
     def on_page_markdown(self, markdown, page, config, files):
         # #save-the-cycles
-        if '> [!' not in markdown:
+
+        if not re.search(r'> ?\[!', markdown):
             return markdown
 
         # Read the markdown line for line
@@ -39,36 +40,23 @@ class CalloutsPlugin(BasePlugin):
 
         # isCallout keeps track of whether or not the next line is
         # part of the callout box, or if it's just regular markdown.
-        isCallout = False
+        is_callout = False
         for line in lines:
-            # if line starts with callout syntax, parse it
-            if line.startswith('> [!') and ']' in line:
-                isCallout = True
-
-                type = line.split('> [!')[1].split(']')[0]
-                suffix = line.split(f'> [!{type}]')[1]
-
-                # Get the syntax and title based on the
-                # block suffix the callout block.
-                syntax, title = parse_callout(suffix)
-
-                # Syntax for admonition, type must be lowercase
-                markdown += f'{syntax} {type.lower()} "{title}"\n'
-                continue
-
-            if line.startswith('>') and isCallout:
-                # find leading ">" or "> " and replace
-                # with 4 spaces, defining the callout content
-                regex = re.compile(r"^> {0,1}")
-                c_line = re.sub(regex, '    ', line)
-
-                markdown += f'{c_line}\n'
-                continue
-
-            # If the line is not part of a callout,
-            # re-add it without modifications
-            markdown += f'{line}\n'
-            isCallout = False
+            contents = line
+            if line.startswith('>[!') and ']' in line:  # Fix callout box syntax
+                contents = line.replace('>[!', '> [!')
+            if re.search(r'^( ?>*)*\[!(.*)\]', line):
+                # This regex allow multiple callout in a callout
+                is_callout = True
+                nb_space = line.count('>')
+                contents = parse_callout_title(line, nb_space)
+            elif line.startswith('>') and is_callout:
+                # parse callout contents
+                contents = re.sub('> ?', '\t', line)  # tabulation = 4 space (cf material documentation)
+            elif is_callout:
+                # no callout anymore
+                is_callout = False
+            markdown += contents + '\n'
 
         # Return the result
         return markdown
