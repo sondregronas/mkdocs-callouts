@@ -14,5 +14,5 @@ def parse_callout_title(line: str, nb: int):
     if len(rest_line) > 1:
         title = title + ' "' + rest_line.strip() + '"'
     if nb > 1:
-        title = '\t' * nb + title
+        title = '\t' * (nb-1) + title
     return title
