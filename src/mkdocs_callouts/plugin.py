@@ -5,7 +5,7 @@ from mkdocs.plugins import BasePlugin
 import re
 
 from mkdocs_callouts.utils import (
-    parse_callout_title,
+    parse_callout_block,
 )
 
 
@@ -27,45 +27,30 @@ class CalloutsPlugin(BasePlugin):
     """
 
     def on_page_markdown(self, markdown, page, config, files):
-        # #save-the-cycles
+        # If markdown file does not contain a callout, skip it
         if not re.search(r'> ?\[!', markdown):
             return markdown
 
-        # Read the markdown line for line
-        lines = markdown.split('\n')
-
-        # Then rebuild it, starting from scratch
-        markdown = ''
-
-        # is_callout keeps track of whether or not the next line is
-        # part of a callout box, or if it's just regular markdown.
+        new_markdown = ''
         is_callout = False
-        for line in lines:
-            new_line = line
-
+        for line in markdown.split('\n'):
             # Find callout box denotation(s) and parse the
             # title/type (regex covers nested callouts)
             if re.search(r'^( ?>*)*\[!(.*)\]', line):
-                # start of callout
                 is_callout = True
-                # count the number of > symbols at start of line
-                c = re.findall('^>+', line)
-                nb_space = len(c[0])
-                new_line = parse_callout_title(line, nb_space)
+                line = parse_callout_block(line)
 
-            # parse callout contents
+            # Parse the callout content, replacing > symbols with indentation
             elif line.startswith('>') and is_callout:
-                # count the number of > symbols at start of line
-                c = re.findall('^>+', line)
-                spaces = '\t' * len(c[0])
-                # replace all leading > symbols 1:1 with tabs
-                new_line = re.sub('^>+ ?', spaces, line)
+                indent = re.findall('^>+', line)
+                indent = '\t' * len(indent[0])
+                line = re.sub('^>+ ?', indent, line)
 
-            # end of callout
+            # End callout block when no leading > is present
             elif is_callout:
                 is_callout = False
 
-            markdown += new_line + '\n'
+            new_markdown += line + '\n'
 
         # Return the result
-        return markdown
+        return new_markdown
