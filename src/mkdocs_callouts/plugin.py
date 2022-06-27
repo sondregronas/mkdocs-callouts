@@ -28,7 +28,6 @@ class CalloutsPlugin(BasePlugin):
 
     def on_page_markdown(self, markdown, page, config, files):
         # #save-the-cycles
-
         if not re.search(r'> ?\[!', markdown):
             return markdown
 
@@ -52,7 +51,7 @@ class CalloutsPlugin(BasePlugin):
                 contents = parse_callout_title(line, nb_space)
             elif line.startswith('>') and is_callout:
                 # parse callout contents
-                contents = re.sub('> ?', '\t', line)  # tabulation = 4 space (cf material documentation)
+                contents = re.sub('> ?', '\t', line)
             elif is_callout:
                 # no callout anymore
                 is_callout = False
