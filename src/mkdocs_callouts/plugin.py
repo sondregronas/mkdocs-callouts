@@ -5,7 +5,7 @@ from mkdocs.plugins import BasePlugin
 import re
 
 from mkdocs_callouts.utils import (
-    parse_callout,
+    parse_callout_title,
 )
 
 
@@ -28,7 +28,7 @@ class CalloutsPlugin(BasePlugin):
 
     def on_page_markdown(self, markdown, page, config, files):
         # #save-the-cycles
-        if '> [!' not in markdown:
+        if not re.search(r'> ?\[!', markdown):
             return markdown
 
         # Read the markdown line for line
@@ -37,38 +37,32 @@ class CalloutsPlugin(BasePlugin):
         # Then rebuild it, starting from scratch
         markdown = ''
 
-        # isCallout keeps track of whether or not the next line is
-        # part of the callout box, or if it's just regular markdown.
-        isCallout = False
+        # is_callout keeps track of whether or not the next line is
+        # part of a callout box, or if it's just regular markdown.
+        is_callout = False
         for line in lines:
-            # if line starts with callout syntax, parse it
-            if line.startswith('> [!') and ']' in line:
-                isCallout = True
-
-                type = line.split('> [!')[1].split(']')[0]
-                suffix = line.split(f'> [!{type}]')[1]
-
-                # Get the syntax and title based on the
-                # block suffix the callout block.
-                syntax, title = parse_callout(suffix)
-
-                # Syntax for admonition, type must be lowercase
-                markdown += f'{syntax} {type.lower()} "{title}"\n'
-                continue
-
-            if line.startswith('>') and isCallout:
-                # find leading ">" or "> " and replace
-                # with 4 spaces, defining the callout content
-                regex = re.compile(r"^> {0,1}")
-                c_line = re.sub(regex, '    ', line)
-
-                markdown += f'{c_line}\n'
-                continue
-
-            # If the line is not part of a callout,
-            # re-add it without modifications
-            markdown += f'{line}\n'
-            isCallout = False
+            new_line = line
+            
+            # Find callout box denotation(s) and parse the 
+            # title/type (regex covers nested callouts)
+            if re.search(r'^( ?>*)*\[!(.*)\]', line):
+                is_callout = True
+                nb_space = line.count('>')
+                new_line = parse_callout_title(line, nb_space)
+                
+            # parse callout contents
+            elif line.startswith('>') and is_callout:
+                # count the number of > symbols at start of line
+                c = re.findall('^>+', line)
+                spaces = '\t' * len(c[0])
+                # replace all leading > symbols 1:1 with tabs
+                new_line = re.sub('^>+ ?', spaces, line)
+                
+            # end of callout
+            elif is_callout:
+                is_callout = False
+                
+            markdown += new_line + '\n'
 
         # Return the result
         return markdown
