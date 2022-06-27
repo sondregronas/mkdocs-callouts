@@ -1,23 +1,18 @@
-def parse_callout(suffix):
-    """
-    Returns proper syntax and title for the callout block.
-    Expected results are ['!!!', title] or ['???'|'???+', title]
-    """
-    syntax = '!!!'
-    title = suffix
-    # Check if the first character of the
-    # suffix defines a foldable callout.
-    # Lastly remove the leading space from title
-    try:
-        if title[0] == '-':
-            syntax = '???'
-            title = title[1:]
-        if title[0] == '+':
-            syntax = '???+'
-            title = title[1:]
-        # Remove leading space
-        title = title[1:]
-    # If title is empty, do nothing.
-    except IndexError:
-        pass
-    return syntax, title
+import re
+
+
+def parse_callout_title(line: str, nb: int):
+    title = re.search(r'^( ?>*)*\[!(.*)\]', line)
+    rest_line = re.sub(r'^( ?>*)*\[!(.*)\][\+\-]?', '', line)
+    title = title.group(2).lower()
+    if ']-' in line:
+        title = '??? ' + title
+    elif ']+' in line:
+        title = '???+ ' + title
+    else:
+        title = '!!! ' + title
+    if len(rest_line) > 1:
+        title = title + ' "' + rest_line.strip() + '"'
+    if nb > 1:
+        title = '\t' * nb + title
+    return title
