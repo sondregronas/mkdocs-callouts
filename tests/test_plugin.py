@@ -55,6 +55,21 @@ def test_on_page_markdown(plugin):
     assert ('???+ info "Folded block"\n\tFolded content'
             in plugin.on_page_markdown(test_markdown, None, None, None))
 
+    # Test link in callout
+    test_markdown = '> [!NOTE] A [Link](https://example.com)\n> Text'
+    assert ('!!! note "A [Link](https://example.com)"\n\tText'
+            in plugin.on_page_markdown(test_markdown, None, None, None))
+
+    # Test callout with leading spaces
+    test_markdown = ' > [!NOTE] Test\n > Text'
+    assert ('!!! note "Test"\n\tText'
+            in plugin.on_page_markdown(test_markdown, None, None, None))
+
+    # Test callout without whitespace
+    test_markdown = '>[!NOTE] Test\n>Text'
+    assert ('!!! note "Test"\n\tText'
+            in plugin.on_page_markdown(test_markdown, None, None, None))
+
     # Test folded block, closed by default, untitled
     test_markdown = '> [!INFO]-\n> Folded content'
     assert ('??? info\n\tFolded content'
@@ -79,7 +94,7 @@ def test_on_page_markdown(plugin):
     assert ('!!! custom "Callout"\n\tCallout Text\nSome text\n> Block'
             in plugin.on_page_markdown(test_markdown, None, None, None))
 
-    # Test wikilink in regular block
+    # Test link in regular block
     test_markdown = '> [[Wikilink]] in a block\n> [Link](https://example.com)'
     assert ('> [[Wikilink]] in a block\n> [Link](https://example.com)'
             in plugin.on_page_markdown(test_markdown, None, None, None))
