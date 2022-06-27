@@ -25,6 +25,11 @@ def test_on_page_markdown(plugin):
     assert ('!!! info "This title has spaces"\n\tAnd text'
             in plugin.on_page_markdown(test_markdown, None, None, None))
 
+    # Test titles with > symbols
+    test_markdown = '> [!INFO] > in title >\n> text'
+    assert ('!!! info "> in title >"\n\ttext'
+            in plugin.on_page_markdown(test_markdown, None, None, None))
+
     # Test callout paragraphs (empty callout line)
     test_markdown = '> [!INFO] Title\n> Paragraph 1\n>\n> Paragraph 2'
     assert ('!!! info "Title"\n\tParagraph 1\n\t\n\tParagraph 2'

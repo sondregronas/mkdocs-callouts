@@ -42,14 +42,17 @@ class CalloutsPlugin(BasePlugin):
         is_callout = False
         for line in lines:
             new_line = line
-            
-            # Find callout box denotation(s) and parse the 
+
+            # Find callout box denotation(s) and parse the
             # title/type (regex covers nested callouts)
             if re.search(r'^( ?>*)*\[!(.*)\]', line):
+                # start of callout
                 is_callout = True
-                nb_space = line.count('>')
+                # count the number of > symbols at start of line
+                c = re.findall('^>+', line)
+                nb_space = len(c[0])
                 new_line = parse_callout_title(line, nb_space)
-                
+
             # parse callout contents
             elif line.startswith('>') and is_callout:
                 # count the number of > symbols at start of line
@@ -57,11 +60,11 @@ class CalloutsPlugin(BasePlugin):
                 spaces = '\t' * len(c[0])
                 # replace all leading > symbols 1:1 with tabs
                 new_line = re.sub('^>+ ?', spaces, line)
-                
+
             # end of callout
             elif is_callout:
                 is_callout = False
-                
+
             markdown += new_line + '\n'
 
         # Return the result
