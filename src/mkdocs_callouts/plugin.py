@@ -36,15 +36,15 @@ class CalloutsPlugin(BasePlugin):
         for line in markdown.split('\n'):
             # Find callout box denotation(s) and parse the
             # title/type (regex covers nested callouts)
-            if re.search(r'^( ?>*)*\[!(.*)\]', line):
+            if re.search(r'^ ?>* *\[![^\]]*\]', line):
                 is_callout = True
                 line = parse_callout_block(line)
 
             # Parse the callout content, replacing > symbols with indentation
-            elif line.startswith('>') and is_callout:
-                indent = re.findall('^>+', line)
-                indent = '\t' * len(indent[0])
-                line = re.sub('^>+ ?', indent, line)
+            elif re.search(r'^ ?>+', line) and is_callout:
+                indent = re.search('^ ?(>+)', line)
+                indent = '\t' * indent.group(1).count('>')
+                line = re.sub('^ ?>+ ?', indent, line)
 
             # End callout block when no leading > is present
             elif is_callout:
