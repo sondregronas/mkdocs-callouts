@@ -37,25 +37,32 @@ class CalloutsPlugin(BasePlugin):
         # Then rebuild it, starting from scratch
         markdown = ''
 
-        # isCallout keeps track of whether or not the next line is
-        # part of the callout box, or if it's just regular markdown.
+        # is_callout keeps track of whether or not the next line is
+        # part of a callout box, or if it's just regular markdown.
         is_callout = False
         for line in lines:
-            contents = line
-            if line.startswith('>[!') and ']' in line:  # Fix callout box syntax
-                contents = line.replace('>[!', '> [!')
+            new_line = line
+            
+            # Find callout box denotation(s) and parse the 
+            # title/type (regex covers nested callouts)
             if re.search(r'^( ?>*)*\[!(.*)\]', line):
-                # This regex allow multiple callout in a callout
                 is_callout = True
                 nb_space = line.count('>')
-                contents = parse_callout_title(line, nb_space)
+                new_line = parse_callout_title(line, nb_space)
+                
+            # parse callout contents
             elif line.startswith('>') and is_callout:
-                # parse callout contents
-                contents = re.sub('> ?', '\t', line)
+                # count the number of > symbols at start of line
+                c = re.findall('^>+', line)
+                spaces = '\t' * len(c[0])
+                # replace all leading > symbols 1:1 with tabs
+                new_line = re.sub('^>+ ?', spaces, line)
+                
+            # end of callout
             elif is_callout:
-                # no callout anymore
                 is_callout = False
-            markdown += contents + '\n'
+                
+            markdown += new_line + '\n'
 
         # Return the result
         return markdown
