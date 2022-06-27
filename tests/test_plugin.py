@@ -37,7 +37,7 @@ def test_on_page_markdown(plugin):
 
     # test multiple callouts
     test_markdown = '> [!INFO]-\n> Folded content\n>>[!INFO]+\n>> Folded content'
-    assert ('??? info\n\tFolded content\n\t\t???+ info\n\t\tFolded content\n'
+    assert ('??? info\n\tFolded content\n\t???+ info\n\t\tFolded content\n'
             in plugin.on_page_markdown(test_markdown, None, None, None))
 
     test_markdown = '> [!INFO]-\n> Folded content'
