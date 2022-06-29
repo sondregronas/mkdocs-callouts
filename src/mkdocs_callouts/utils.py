@@ -2,7 +2,7 @@ import re
 
 
 # Convert callout syntax from obsidian to mkdocs
-def parse_callout_block(line: str):
+def parse_callout_syntax(line: str):
     block = re.search(r'^ ?(>*) *\[!([^\]]*)\]([\-\+]?)(.*)?', line)
 
     # Group 1: Leading > symbols (indentation, for nested callouts)

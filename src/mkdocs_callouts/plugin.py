@@ -5,7 +5,7 @@ from mkdocs.plugins import BasePlugin
 import re
 
 from mkdocs_callouts.utils import (
-    parse_callout_block,
+    parse_callout_syntax,
 )
 
 
@@ -34,17 +34,17 @@ class CalloutsPlugin(BasePlugin):
         new_markdown = ''
         is_callout = False
         for line in markdown.split('\n'):
-            # Find callout box denotation(s) and parse the
+            # Find callout box syntax and parse the
             # title/type (regex covers nested callouts)
             if re.search(r'^ ?>* *\[![^\]]*\]', line):
                 is_callout = True
-                line = parse_callout_block(line)
+                line = parse_callout_syntax(line)
 
             # Parse the callout content, replacing > symbols with indentation
             elif re.search(r'^ ?>+', line) and is_callout:
-                indent = re.search('^ ?(>+)', line)
+                indent = re.search(r'^ ?(>+)', line)
                 indent = '\t' * indent.group(1).count('>')
-                line = re.sub('^ ?>+ ?', indent, line)
+                line = re.sub(r'^ ?>+ ?', indent, line)
 
             # End callout block when no leading > is present
             elif is_callout:
@@ -52,5 +52,5 @@ class CalloutsPlugin(BasePlugin):
 
             new_markdown += line + '\n'
 
-        # Return the result
-        return new_markdown
+        # Return the result, minus the last \n
+        return new_markdown[:-1]
