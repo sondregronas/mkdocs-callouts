@@ -1,8 +1,8 @@
 import re
 
 
-# Convert callout syntax from obsidian to mkdocs
-def parse_callout_syntax(line: str):
+def parse_callout_syntax(line: str) -> str:
+    """Converts the callout syntax from obsidian into the mkdocs syntax"""
     block = re.search(r'^ ?(>*) *\[!([^\]]*)\]([\-\+]?)(.*)?', line)
 
     # Group 1: Leading > symbols (indentation, for nested callouts)
@@ -13,18 +13,12 @@ def parse_callout_syntax(line: str):
     type = block.group(2).lower()
 
     # Group 3: Foldable callouts
-    foldable = block.group(3)
-    if foldable == '-':
-        syntax = '???'
-    elif foldable == '+':
-        syntax = '???+'
-    else:
-        syntax = '!!!'
+    syntax = {'-': '???', '+': '???+', '': '!!!'}
+    syntax = syntax[block.group(3)]
 
     # Group 4: Title, add leading whitespace and quotation marks, if it exists
     title = block.group(4).strip()
-    if title:
-        title = f' "{title}"'
+    title = f' "{title}"' if title else ''
 
     # Construct the new callout syntax ({indent}!!! note "Title")
     return f'{indent}{syntax} {type}{title}'
