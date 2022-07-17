@@ -35,7 +35,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m pytest --cov-report=xml tests/test_plugin.py
+          python -m pytest tests/test_plugin.py --cov=mkdocs_callouts --cov-report=xml
 
       - uses: codecov/codecov-action@v3
         with:
