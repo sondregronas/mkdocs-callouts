@@ -30,8 +30,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pytest>=7.1.2
+          python -m pip install pytest-cov>=3.0.0
           python setup.py install
 
       - name: Run unit tests
         run: |
-          python -m pytest tests/test_plugin.py
+          python -m pytest --cov-report=xml tests/test_plugin.py
+
+      - uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
