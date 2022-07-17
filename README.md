@@ -3,6 +3,7 @@
 [![GitHub latest commit](https://img.shields.io/github/last-commit/sondregronas/mkdocs-callouts)](https://github.com/sondregronas/mkdocs-callouts/commit/)
 [![PyPi](https://img.shields.io/pypi/v/mkdocs-callouts)](https://pypi.org/project/mkdocs-callouts/)
 [![AGPLv3 license](https://img.shields.io/github/license/sondregronas/mkdocs-callouts)](https://www.gnu.org/licenses/agpl-3.0.en.html)
+[![codecov](https://codecov.io/gh/sondregronas/mkdocs-callouts/branch/main/graph/badge.svg?token=N5IDI7Q4NZ)](https://codecov.io/gh/sondregronas/mkdocs-callouts)
 [![Buymeacoffee](https://badgen.net/badge/icon/buymeacoffee?icon=buymeacoffee&label)](https://www.buymeacoffee.com/u92RMis)
 
 A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported 'admonitions' (a.k.a. callouts).
