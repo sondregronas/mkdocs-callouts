@@ -6,20 +6,21 @@
 [![codecov](https://codecov.io/gh/sondregronas/mkdocs-callouts/branch/main/graph/badge.svg?token=N5IDI7Q4NZ)](https://codecov.io/gh/sondregronas/mkdocs-callouts)
 [![Buymeacoffee](https://badgen.net/badge/icon/buymeacoffee?icon=buymeacoffee&label)](https://www.buymeacoffee.com/u92RMis)
 
-A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported 'admonitions' (a.k.a. callouts).
+A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported ['admonitions'](https://squidfunk.github.io/mkdocs-material/reference/admonitions/) (a.k.a. callouts).
 
 ## Setup
 Install the plugin using pip:
 
 `pip install mkdocs-callouts`
 
-Activate the plugin in `mkdocs.yml`, note that the markdown_extensions `nl2br`, `admonition` and `pymdownx.details` are required for this plugin to render correctly:
+Activate the plugin in `mkdocs.yml`, note that some markdown_extensions are required for this plugin to function correctly:
 
 ```yaml
 markdown_extensions:
   - nl2br
   - admonition
   - pymdownx.details
+  - pymdownx.superfences
 
 plugins:
   - search
@@ -43,8 +44,22 @@ and turns it into:
     with confidence using Obsidian.
 ```
 
+### Foldable blocks
 Foldable blocks are also supported. (`> [!INFO]- Foldable closed by default`, `> [!INFO]+ Foldable open by default`)
 
-In fine, it supports also `[!info|left]` and `[!info|right]` for alignment (it will turn into `!!! info inline` and `!!! info inline end`). To get more information about inline, check the [Material Mkdocs Documentation](https://squidfunk.github.io/mkdocs-material/reference/admonitions/#inline-blocks).
+### Inline blocks
+To turn a callout block into an inline block you can use the `|left` or `|right` syntax in the type notation like so:
+```
+> [!INFO|left] -> !!! info inline (alt: [!INFO | left])
+> [!INFO|inline] -> !!! info inline
 
-Also, note that material Mkdocs will not recognize custom callout unless you set the admonition style in your CSS!
+> [!INFO|right] -> !!! info inline end 
+> [!INFO|inline end] -> !!! info inline end
+```
+
+The following also works, but Obsidian may not be able to render the block type properly.
+```
+> [!INFO inline] --> !!! info inline
+> [!INFO inline end] --> !!! info inline end
+```
+To get more information about inline blocks, or how to add your own custom callout blocks, check the [Material Mkdocs Documentation](https://squidfunk.github.io/mkdocs-material/reference/admonitions/#inline-blocks).
