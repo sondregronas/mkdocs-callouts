@@ -44,3 +44,7 @@ and turns it into:
 ```
 
 Foldable blocks are also supported. (`> [!INFO]- Foldable closed by default`, `> [!INFO]+ Foldable open by default`)
+
+In fine, it supports also `[!info|left]` and `[!info|right]` for alignment (it will turn into `!!! info inline` and `!!! info inline end`). To get more information about inline, check the [Material Mkdocs Documentation](https://squidfunk.github.io/mkdocs-material/reference/admonitions/#inline-blocks).
+
+Also, note that material Mkdocs will not recognize custom callout unless you set the admonition style in your CSS!

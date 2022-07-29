@@ -97,6 +97,17 @@ def test_nested_callouts():
     result = '??? info\n\tFolded content\n\t???+ info\n\t\tFolded content'
     assert (convert(mkdown) == result)
 
+def test_custom_callouts():
+    mkdown = '> [!CUSTOM] Custom callout\n> Text'
+    result = '!!! custom "Custom callout"\n\tText'
+    assert (convert(mkdown) == result)
+
+    mkdown = '> [!infobox|left]\n> Text'
+    result = '!!! infobox inline\n\tText'
+    assert (convert(mkdown) == result)
+
+    mkdown = '> [!infobox|right]\n> Text'
+    result = '!!! infobox inline end\n\tText'
 
 def test_folded_callouts():
     # Test folded block, closed by default

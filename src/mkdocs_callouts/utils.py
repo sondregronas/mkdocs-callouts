@@ -21,4 +21,4 @@ def parse_callout_syntax(line: str) -> str:
     title = f' "{title}"' if title else ''
 
     # Construct the new callout syntax ({indent}!!! note "Title")
-    return f'{indent}{syntax} {type}{title}'
+    return f'{indent}{syntax} {type.replace("|left", " inline").replace("|right", " inline end")}{title}'
