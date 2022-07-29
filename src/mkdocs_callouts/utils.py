@@ -11,8 +11,9 @@ def parse_callout_syntax(line: str) -> str:
 
     # Group 2: Callout block type (note, warning, info, etc.)
     type = block.group(2).lower()
-    type = re.sub(r'\| *(inline end|right) ?$', ' inline end', type)
     type = re.sub(r'\| *(inline|left) ?$', ' inline', type)
+    type = re.sub(r'\| *(inline end|right) ?$', ' inline end', type)
+    type = re.sub(r'\|.*', '', type)
 
     # Group 3: Foldable callouts
     syntax = {'-': '???', '+': '???+', '': '!!!'}
