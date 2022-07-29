@@ -11,6 +11,8 @@ def parse_callout_syntax(line: str) -> str:
 
     # Group 2: Callout block type (note, warning, info, etc.)
     type = block.group(2).lower()
+    type=type.replace("|left", " inline").replace("|right", " inline end")
+    type = re.sub(r"\|.*", "", type)
 
     # Group 3: Foldable callouts
     syntax = {'-': '???', '+': '???+', '': '!!!'}
@@ -21,4 +23,4 @@ def parse_callout_syntax(line: str) -> str:
     title = f' "{title}"' if title else ''
 
     # Construct the new callout syntax ({indent}!!! note "Title")
-    return f'{indent}{syntax} {type.replace("|left", " inline").replace("|right", " inline end")}{title}'
+    return f'{indent}{syntax} {type}{title}'

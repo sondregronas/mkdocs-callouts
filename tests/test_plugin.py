@@ -106,8 +106,9 @@ def test_custom_callouts():
     result = '!!! infobox inline\n\tText'
     assert (convert(mkdown) == result)
 
-    mkdown = '> [!infobox|right]\n> Text'
-    result = '!!! infobox inline end\n\tText'
+    mkdown = '> [!infobox|other] Title\n> Text'
+    result = '!!! infobox "Title"\n\tText'
+    assert (convert(mkdown) == result)
 
 def test_folded_callouts():
     # Test folded block, closed by default
