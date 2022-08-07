@@ -57,7 +57,7 @@ To turn a callout block into an inline block you can use the `|left` or `|right`
 > [!INFO|inline end] -> !!! info inline end
 ```
 
-The following also works, but Obsidian may not be able to render the block type properly.
+The following also works, but Obsidian may not render the block type correctly.
 ```
 > [!INFO inline] --> !!! info inline
 > [!INFO inline end] --> !!! info inline end
