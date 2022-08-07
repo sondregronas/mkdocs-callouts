@@ -40,7 +40,8 @@ class CalloutParser:
 
     def _convert_block(self, line: str) -> str:
         """Calls parse_block_syntax if regex matches, which returns a converted callout block"""
-        if match := re.search(CALLOUT_BLOCK_REGEX, line):
+        match = re.search(CALLOUT_BLOCK_REGEX, line)
+        if match:
             self.active_callout = True
             return self._parse_block_syntax(match)
 
@@ -50,7 +51,8 @@ class CalloutParser:
 
         Will return the original line if active_callout is false or line is missing leading '>' symbols.
         """
-        if (match := re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)) and self.active_callout:
+        match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
+        if match and self.active_callout:
             indent = '\t' * match.group(1).count('>')
             line = re.sub(CALLOUT_CONTENT_SYNTAX_REGEX, indent, line)
         else:
@@ -63,7 +65,8 @@ class CalloutParser:
         Calls _convert_block if line matches that of a callout block syntax,
         if line is not a block syntax, it will call _convert_content.
         """
-        return block if (block := self._convert_block(line)) else self._convert_content(line)
+        block = self._convert_block(line)
+        return block if block else self._convert_content(line)
 
     def parse(self, markdown: str) -> str:
         """Takes a markdown file input returns a version with converted callout syntax"""
