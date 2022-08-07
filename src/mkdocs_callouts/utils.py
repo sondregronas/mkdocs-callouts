@@ -39,7 +39,7 @@ class CalloutParser:
         return f'{indent}{syntax} {c_type}{title}'
 
     def _convert_block(self, line: str) -> str:
-        """Calls parse_callout_block_syntax if regex matches, which returns a converted callout block"""
+        """Calls parse_block_syntax if regex matches, which returns a converted callout block"""
         if match := re.search(CALLOUT_BLOCK_REGEX, line):
             self.active_callout = True
             return self._parse_block_syntax(match)
