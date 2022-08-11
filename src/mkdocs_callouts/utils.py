@@ -15,8 +15,10 @@ class CalloutParser:
         self.active_callout: bool = False
 
     @staticmethod
-    def _parse_block_syntax(block: re.Match) -> str:
-        """Converts the callout syntax from obsidian into the mkdocs syntax"""
+    def _parse_block_syntax(block) -> str:
+        """Converts the callout syntax from obsidian into the mkdocs syntax
+        Takes an argument block, which is a regex match.
+        """
         # Group 1: Leading > symbols (indentation, for nested callouts)
         indent = block.group(1).count('>')
         indent = '\t' * (indent - 1)
