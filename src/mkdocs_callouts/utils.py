@@ -51,7 +51,7 @@ class CalloutParser:
         """
         Converts the callout content by replacing leading '>' symbols with '\t'.
 
-        Will return the original line if active_callout is false or line is missing leading '>' symbols.
+        Will return the original line if active_callout is false or if line is missing leading '>' symbols.
         """
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
         if match and self.active_callout:
@@ -64,17 +64,16 @@ class CalloutParser:
     def convert_line(self, line: str) -> str:
         """
         Converts the syntax for callouts to admonitions for a single line of markdown
-        Calls _convert_block if line matches that of a callout block syntax,
-        if line is not a block syntax, it will call _convert_content.
+        returns _convert_block if line matches that of a callout block syntax,
+        if line is not a block syntax, it will return _convert_content.
         """
-        block = self._convert_block(line)
-        return block if block else self._convert_content(line)
+        return self._convert_block(line) or self._convert_content(line)
 
     def parse(self, markdown: str) -> str:
         """Takes a markdown file input returns a version with converted callout syntax"""
-        self.active_callout = False  # Reset (doesn't matter for mkdocs)
+        self.active_callout = False  # Reset (redundant in conjunction with mkdocs)
         # If markdown file does not contain a callout, skip it
-        if not re.search(r'> *\[!', markdown):
+        if not CALLOUT_BLOCK_REGEX.search(markdown):
             return markdown
         # Convert markdown line by line, then return it
         return '\n'.join(self.convert_line(line) for line in markdown.split('\n'))
