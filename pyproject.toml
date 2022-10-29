@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mkdocs-callouts"
+version = "1.8.0"
+keywords = ["mkdocs", "mkdocs-plugin", "markdown", "callouts", "admonitions", "obsidian"]
+description = "A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported 'admonitions' (a.k.a. callouts)."
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [{ name = "Sondre Grønås", email = "mail@sondregronas.com" }]
+license = {text = "AGPL-3.0-or-later"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation"
+]
+
+dependencies = [
+    "mkdocs>=1"
+]
+
+[project.urls]
+homepage = "https://github.com/sondregronas/mkdocs-callouts"
+documentation = "https://github.com/sondregronas/mkdocs-callouts"
+repository = "https://github.com/sondregronas/mkdocs-callouts"
+issues = "https://github.com/sondregronas/mkdocs-callouts/issues"
+funding = "https://github.com/sponsors/sondregronas"
+
+[project.optional-dependencies]
+tests = [
+    'pytest'
+]
+
+[project.entry-points."mkdocs.plugins"]
+callouts = "mkdocs_callouts.plugin:CalloutsPlugin"

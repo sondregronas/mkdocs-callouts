@@ -73,7 +73,7 @@ class CalloutParser:
         """Takes a markdown file input returns a version with converted callout syntax"""
         self.active_callout = False  # Reset (redundant in conjunction with mkdocs)
         # If markdown file does not contain a callout, skip it
-        if not CALLOUT_BLOCK_REGEX.search(markdown):
+        if not re.search(r'> *\[!', markdown):
             return markdown
         # Convert markdown line by line, then return it
         return '\n'.join(self.convert_line(line) for line in markdown.split('\n'))
