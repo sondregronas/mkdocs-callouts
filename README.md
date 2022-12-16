@@ -1,5 +1,5 @@
 # mkdocs-callouts
-[![Build Status](https://img.shields.io/github/workflow/status/sondregronas/mkdocs-callouts/CI)](https://github.com/sondregronas/mkdocs-callouts/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sondregronas/mkdocs-callouts/CI.yml?branch=main)](https://github.com/sondregronas/mkdocs-callouts/)
 [![GitHub latest commit](https://img.shields.io/github/last-commit/sondregronas/mkdocs-callouts)](https://github.com/sondregronas/mkdocs-callouts/commit/)
 [![PyPi](https://img.shields.io/pypi/v/mkdocs-callouts)](https://pypi.org/project/mkdocs-callouts/)
 [![AGPLv3 license](https://img.shields.io/github/license/sondregronas/mkdocs-callouts)](https://www.gnu.org/licenses/agpl-3.0.en.html)
