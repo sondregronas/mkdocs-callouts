@@ -11,11 +11,24 @@ CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^ ?(>+) ?')
 
 
 class CalloutParser:
-    def __init__(self):
-        self.active_callout: bool = False
+    # From https://help.obsidian.md/How+to/Use+callouts#Types
+    aliases = {
+        'abstract': ['summary', 'tldr'],
+        'tip':      ['hint', 'important'],
+        'success':  ['check', 'done'],
+        'question': ['help', 'faq'],
+        'warning':  ['caution', 'attention'],
+        'failure':  ['fail', 'missing'],
+        'danger':   ['error'],
+        'quote':    ['cite']
+    }
+    alias_tuples = [(alias, c_type) for c_type, aliases in aliases.items() for alias in aliases]
 
-    @staticmethod
-    def _parse_block_syntax(block) -> str:
+    def __init__(self, convert_aliases: bool = True):
+        self.active_callout: bool = False
+        self.convert_aliases: bool = convert_aliases
+
+    def _parse_block_syntax(self, block) -> str:
         """Converts the callout syntax from obsidian into the mkdocs syntax
         Takes an argument block, which is a regex match.
         """
@@ -25,9 +38,12 @@ class CalloutParser:
 
         # Group 2: Callout block type (note, warning, info, etc.) + inline block syntax
         c_type = block.group(2).lower()
-        c_type = re.sub(r' ?\| *(inline|left) *$', ' inline', c_type)
-        c_type = re.sub(r' ?\| *(inline end|right) *$', ' inline end', c_type)
-        c_type = re.sub(r' ?\|.*', '', c_type)
+        c_type = re.sub(r' *\| *(inline|left) *$', ' inline', c_type)
+        c_type = re.sub(r' *\| *(inline end|right) *$', ' inline end', c_type)
+        c_type = re.sub(r' *\|.*', '', c_type)
+        # Convert aliases, if enabled
+        if self.convert_aliases:
+            c_type = self._convert_aliases(c_type)
 
         # Group 3: Foldable callouts
         syntax = {'-': '???', '+': '???+'}
@@ -39,6 +55,13 @@ class CalloutParser:
 
         # Construct the new callout syntax ({indent}!!! note "Title")
         return f'{indent}{syntax} {c_type}{title}'
+
+    @staticmethod
+    def _convert_aliases(c_type: str) -> str:
+        """Converts aliases to their respective callout type, if its enabled"""
+        for alias, identifier in CalloutParser.alias_tuples:
+            c_type = re.sub(rf'^{alias}\b', identifier, c_type)
+        return c_type
 
     def _convert_block(self, line: str) -> str:
         """Calls parse_block_syntax if regex matches, which returns a converted callout block"""

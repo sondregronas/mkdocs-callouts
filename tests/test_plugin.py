@@ -1,6 +1,7 @@
 import pytest
 
 from mkdocs_callouts.plugin import CalloutsPlugin
+from mkdocs_callouts.utils import CalloutParser
 
 
 def convert(input: str) -> str:
@@ -138,3 +139,50 @@ def test_folded_callouts():
     mkdown = '> [!INFO]+\n> Folded content'
     result = '???+ info\n\tFolded content'
     assert (convert(mkdown) == result)
+
+
+def test_aliases_enabled():
+    parser = CalloutParser(convert_aliases=True)
+
+    # Test alias conversion
+    mkdown = '> [!HINT]\n> Text'
+    result = '!!! tip\n\tText'
+    assert (parser.parse(mkdown) == result)
+
+    # Test alias conversion with inline block syntax
+    mkdown = '> [!HINT | inline]\n> Text'
+    result = '!!! tip inline\n\tText'
+    assert (parser.parse(mkdown) == result)
+
+    # Test alias conversion where alias is a substring of another alias
+    mkdown = '> [!checking]\n> Text'
+    unexpected = '!!! successing\n\tText'
+    result = '!!! checking\n\tText'
+    assert (parser.parse(mkdown) == result)
+    assert (parser.parse(mkdown) != unexpected)
+
+    # Test alias conversion where alias is a substring of another alias, with inline block syntax
+    mkdown = '> [!checking | inline]\n> Text'
+    unexpected = '!!! successing inline\n\tText'
+    result = '!!! checking inline\n\tText'
+    assert (parser.parse(mkdown) == result)
+    assert (parser.parse(mkdown) != unexpected)
+
+    # Test alias where first word is not an alias
+    mkdown = '> [!A HINT]\n> Text'
+    result = '!!! a hint\n\tText'
+    assert (parser.parse(mkdown) == result)
+
+    mkdown = '> [!A_HINT]\n> Text'
+    result = '!!! a_hint\n\tText'
+    assert (parser.parse(mkdown) == result)
+
+
+def test_aliases_disabled():
+    parser = CalloutParser(convert_aliases=False)
+
+    mkdown = '> [!HINT]\n> Text'
+    unexpected = '!!! tip\n\tText'
+    result = '!!! hint\n\tText'
+    assert (parser.parse(mkdown) == result)
+    assert (parser.parse(mkdown) != unexpected)

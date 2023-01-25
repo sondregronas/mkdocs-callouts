@@ -62,3 +62,12 @@ The following also works, but Obsidian may not render the block type correctly.
 > [!INFO inline end] --> !!! info inline end
 ```
 To get more information about inline blocks, or how to add your own custom callout blocks, check the [Material Mkdocs Documentation](https://squidfunk.github.io/mkdocs-material/reference/admonitions/#inline-blocks).
+
+### Aliases
+Obsidian allows the use of [aliases when creating callouts](https://help.obsidian.md/How+to/Use+callouts#Types), mkdocs-callouts converts these to the corresponding block type. Should you wish to disable this behaviour then you can do so by setting `aliases` to `false` in the plugin configuration:
+```yaml
+plugins:
+  - search
+  - callouts:
+      aliases: false
+```

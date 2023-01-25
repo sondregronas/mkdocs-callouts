@@ -1,4 +1,5 @@
 from mkdocs.plugins import BasePlugin
+from mkdocs.config import config_options
 
 from mkdocs_callouts.utils import CalloutParser
 
@@ -16,5 +17,12 @@ class CalloutsPlugin(BasePlugin):
            Allowing you to edit your notes
            with confidence using Obsidian.
     """
+    config_scheme = {  # pragma: no cover
+        ('aliases', config_options.Type(bool, default=True))
+    }
+
     def on_page_markdown(self, markdown, page, config, files):
-        return CalloutParser().parse(markdown)
+        parser = CalloutParser(
+            convert_aliases=self.config.get('aliases', True)
+        )
+        return parser.parse(markdown)
