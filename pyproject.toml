@@ -10,7 +10,7 @@ description = "A simple plugin that converts Obsidian style callouts and convert
 readme = "README.md"
 requires-python = ">=3.7"
 authors = [{ name = "Sondre Grønås", email = "mail@sondregronas.com" }]
-license = "MIT"
+license = { text = "MIT", file = "LICENSE" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
