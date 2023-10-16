@@ -1,2 +1,3 @@
 mkdocs>=1
+setuptools
 pytest>=7.1.2

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-callouts"
-version = "1.9.1"
+version = "1.9.2"
 keywords = ["mkdocs", "mkdocs-plugin", "markdown", "callouts", "admonitions", "obsidian"]
 description = "A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported 'admonitions' (a.k.a. callouts)."
 readme = "README.md"
@@ -22,12 +22,14 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Documentation",
     "Topic :: Software Development :: Documentation"
 ]
 
 dependencies = [
-    "mkdocs>=1"
+    "mkdocs>=1",
+    "setuptools"
 ]
 
 [project.urls]
