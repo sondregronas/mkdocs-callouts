@@ -186,3 +186,32 @@ def test_aliases_disabled():
     result = '!!! hint\n\tText'
     assert (parser.parse(mkdown) == result)
     assert (parser.parse(mkdown) != unexpected)
+
+
+def test_nested_callouts_with_spaces():
+    parser = CalloutParser(convert_aliases=True)
+
+    mkdown = '> [!INFO]\n> > [!INFO]'
+    result = '!!! info\n\t!!! info'
+    assert (parser.parse(mkdown) == result)
+
+
+    mkdown = '> [!INFO]\n> > [!INFO] Title\n> > > [!INFO]\n> [!INFO]\n > [!INFO]'
+    result = '!!! info\n\t!!! info "Title"\n\t\t!!! info\n!!! info\n!!! info'
+    assert (parser.parse(mkdown) == result)
+
+
+def test_nested_callouts_with_blockquotes():
+    parser = CalloutParser(convert_aliases=True)
+
+    mkdown = '> [!INFO]\n> > blockquote'
+    result = '!!! info\n\t> blockquote'
+    assert (parser.parse(mkdown) == result)
+
+    mkdown = '> [!INFO]\n> > blockquote\n> > > blockquote'
+    result = '!!! info\n\t> blockquote\n\t> > blockquote'
+    assert (parser.parse(mkdown) == result)
+
+    mkdown = '> [!INFO]\n> > [!INFO]\n> text\n> > blockquote'
+    result = '!!! info\n\t!!! info\n\ttext\n\t> blockquote'
+    assert (parser.parse(mkdown) == result)
