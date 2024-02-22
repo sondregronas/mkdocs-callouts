@@ -81,7 +81,7 @@ class CalloutParser:
         This is a workaround for Obsidian's default behavior, which allows for lists to be created
         without a blank line between them.
         """
-        is_list = re.search(r'^\s*[-+*]\s', line)
+        is_list = re.search(r'^\s*(?:[-+*])|(?:\d+\.)\s', line)
         if is_list and self.text_in_prev_line:
             # If the previous line was a list, keep the line as is
             if self.list_in_prev_line:
