@@ -239,3 +239,8 @@ def test_breakless_lists():
     mkdown = '> [!INFO]\n> > [!INFO]\n> > text\n> > - item 1\n> > - item 2\n> text\n> - item 1\n> - item 2'
     result = '!!! info\n\t!!! info\n\t\ttext\n\t\t\n\t\t- item 1\n\t\t- item 2\n\ttext\n\t\n\t- item 1\n\t- item 2'
     assert (parser.parse(mkdown) == result)
+
+    # Ordered lists
+    mkdown = '> [!INFO]\n> text\n> 1. item 1\n> 2. item 2'
+    result = '!!! info\n\ttext\n\t\n\t1. item 1\n\t2. item 2'
+    assert (parser.parse(mkdown) == result)
