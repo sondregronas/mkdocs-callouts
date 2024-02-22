@@ -71,3 +71,12 @@ plugins:
   - callouts:
       aliases: false
 ```
+
+### Breakless lists (New in 1.11.0)
+Markdown specification requires a blank line between list items and other block elements, whereas Obsidian does not require this. This plugin will by default automatically add a blank line between list items and callout blocks (if none are present). Should you wish to disable this behaviour then you can do so by setting `breakless_lists` to `false` in the plugin configuration:
+```yaml
+plugins:
+  - search
+  - callouts:
+      breakless_lists: false
+```
