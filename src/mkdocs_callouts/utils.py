@@ -1,12 +1,12 @@
 import re
 
-CALLOUT_BLOCK_REGEX = re.compile(r'^ ?(>+) *\[!([^\]]*)\]([\-\+]?)(.*)?')
+CALLOUT_BLOCK_REGEX = re.compile(r'^ ?((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?')
 # (1): indents (all leading '>' symbols)
 # (2): callout type ([!'capture'] or [!'capture | attribute'] excl. brackets and leading !)
 # (3): foldable token (+ or - or <blank>)
 # (4): title
 
-CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^ ?(>+) ?')
+CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^ ?((?:> ?)+) ?')
 # (1): indents (all leading '>' symbols)
 
 
@@ -25,7 +25,9 @@ class CalloutParser:
     alias_tuples = [(alias, c_type) for c_type, aliases in aliases.items() for alias in aliases]
 
     def __init__(self, convert_aliases: bool = True):
-        self.active_callout: bool = False
+        # Stack to keep track of the current indentation level
+        self.indent_levels: list[int] = list()
+        # Whether to convert aliases or not
         self.convert_aliases: bool = convert_aliases
 
     def _parse_block_syntax(self, block) -> str:
@@ -67,7 +69,10 @@ class CalloutParser:
         """Calls parse_block_syntax if regex matches, which returns a converted callout block"""
         match = re.search(CALLOUT_BLOCK_REGEX, line)
         if match:
-            self.active_callout = True
+            # Store the current indent level and add it to the list if it doesn't exist
+            indent_level = match.group(1).count('>')
+            if indent_level not in self.indent_levels:
+                self.indent_levels.append(indent_level)
             return self._parse_block_syntax(match)
 
     def _convert_content(self, line: str) -> str:
@@ -77,11 +82,15 @@ class CalloutParser:
         Will return the original line if active_callout is false or if line is missing leading '>' symbols.
         """
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
-        if match and self.active_callout:
-            indent = '\t' * match.group(1).count('>')
-            line = re.sub(CALLOUT_CONTENT_SYNTAX_REGEX, indent, line)
+        if match and self.indent_levels:
+            # Get the last indent level and remove any higher levels when the current line
+            # has a lower indent level than the last line.
+            if match.group(1).count('>') < self.indent_levels[-1]:
+                self.indent_levels = self.indent_levels[:-1]
+            indent = '\t' * self.indent_levels[-1]
+            line = re.sub(rf'^ ?(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
         else:
-            self.active_callout = False
+            self.indent_levels = list()
         return line
 
     def convert_line(self, line: str) -> str:
@@ -94,7 +103,7 @@ class CalloutParser:
 
     def parse(self, markdown: str) -> str:
         """Takes a markdown file input returns a version with converted callout syntax"""
-        self.active_callout = False  # Reset (redundant in conjunction with mkdocs)
+        self.indent_levels = list()  # Reset (redundant in conjunction with mkdocs)
         # If markdown file does not contain a callout, skip it
         if not re.search(r'> *\[!', markdown):
             return markdown
