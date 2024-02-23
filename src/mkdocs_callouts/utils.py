@@ -38,6 +38,9 @@ class CalloutParser:
         self.text_in_prev_line: bool = False
         self.list_in_prev_line: bool = False
 
+        # Check that the callout isn't inside a codefence
+        self.in_codefence: bool = False
+
     def _parse_block_syntax(self, block) -> str:
         """
         Converts the callout syntax from obsidian into the mkdocs syntax
@@ -115,7 +118,7 @@ class CalloutParser:
         if match and self.indent_levels:
             # Get the last indent level and remove any higher levels when the current line
             # has a lower indent level than the last line.
-            if match.group(1).count('>') < self.indent_levels[-1]:
+            while match.group(1).count('>') < self.indent_levels[-1]:
                 self.indent_levels = self.indent_levels[:-1]
             indent = '\t' * self.indent_levels[-1]
             line = re.sub(rf'^ ?(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
@@ -132,6 +135,12 @@ class CalloutParser:
         returns _convert_block if line matches that of a callout block syntax,
         if line is not a block syntax, it will return _convert_content.
         """
+        if line.startswith('```'):
+            self.in_codefence = not self.in_codefence
+        if self.in_codefence:
+            # Reset the indent levels if the callout is inside a codefence
+            self.indent_levels = list()
+            return line
         return self._convert_block(line) or self._convert_content(line)
 
     def parse(self, markdown: str) -> str:
