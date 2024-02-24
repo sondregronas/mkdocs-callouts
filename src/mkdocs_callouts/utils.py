@@ -1,13 +1,15 @@
 import re
 
-CALLOUT_BLOCK_REGEX = re.compile(r'^ ?((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?')
-# (1): indents (all leading '>' symbols)
-# (2): callout type ([!'capture'] or [!'capture | attribute'] excl. brackets and leading !)
-# (3): foldable token (+ or - or <blank>)
-# (4): title
+CALLOUT_BLOCK_REGEX = re.compile(r'^(\s*)((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?')
+# (1): leading whitespace (all tabs and 4x spaces get reused)
+# (2): indents (all leading '>' symbols)
+# (3): callout type ([!'capture'] or [!'capture | attribute'] excl. brackets and leading !)
+# (4): foldable token (+ or - or <blank>)
+# (5): title
 
-CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^ ?((?:> ?)+) ?')
-# (1): indents (all leading '>' symbols)
+CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^(\s*)((?:> ?)+)')
+# (1): leading whitespace (all tabs and 4x spaces get reused)
+# (2): indents (all leading '>' symbols)
 
 
 class CalloutParser:
@@ -46,12 +48,16 @@ class CalloutParser:
         Converts the callout syntax from obsidian into the mkdocs syntax
         Takes an argument block, which is a regex match.
         """
-        # Group 1: Leading > symbols (indentation, for nested callouts)
-        indent = block.group(1).count('>')
+        # Group 1: Leading whitespace (we need to reuse tabs and 4x spaces)
+        whitespace = block.group(1).replace('    ', '\t')
+        whitespace = re.sub(r'[^\t]', '', whitespace)
+
+        # Group 2: Leading > symbols (indentation, for nested callouts)
+        indent = block.group(2).count('>')
         indent = '\t' * (indent - 1)
 
-        # Group 2: Callout block type (note, warning, info, etc.) + inline block syntax
-        c_type = block.group(2).lower()
+        # Group 3: Callout block type (note, warning, info, etc.) + inline block syntax
+        c_type = block.group(3).lower()
         c_type = re.sub(r' *\| *(inline|left) *$', ' inline', c_type)
         c_type = re.sub(r' *\| *(inline end|right) *$', ' inline end', c_type)
         c_type = re.sub(r' *\|.*', '', c_type)
@@ -59,16 +65,16 @@ class CalloutParser:
         if self.convert_aliases:
             c_type = self._convert_aliases(c_type)
 
-        # Group 3: Foldable callouts
+        # Group 4: Foldable callouts
         syntax = {'-': '???', '+': '???+'}
-        syntax = syntax.get(block.group(3), '!!!')
+        syntax = syntax.get(block.group(4), '!!!')
 
-        # Group 4: Title, add leading whitespace and quotation marks, if it exists
-        title = block.group(4).strip()
+        # Group 5: Title, add leading whitespace and quotation marks, if it exists
+        title = block.group(5).strip()
         title = f' "{title}"' if title else ''
 
         # Construct the new callout syntax ({indent}!!! note "Title")
-        return f'{indent}{syntax} {c_type}{title}'
+        return f'{whitespace}{indent}{syntax} {c_type}{title}'
 
     @staticmethod
     def _convert_aliases(c_type: str) -> str:
@@ -84,7 +90,7 @@ class CalloutParser:
         This is a workaround for Obsidian's default behavior, which allows for lists to be created
         without a blank line between them.
         """
-        is_list = re.search(r'^\s*(?:[-+*])|(?:\d+\.)\s', line)
+        is_list = re.search(r'^\s*(?:[-+*]|\d+\.)\s', line)
         if is_list and self.text_in_prev_line:
             # If the previous line was a list, keep the line as is
             if self.list_in_prev_line:
@@ -103,7 +109,7 @@ class CalloutParser:
         match = re.search(CALLOUT_BLOCK_REGEX, line)
         if match:
             # Store the current indent level and add it to the list if it doesn't exist
-            indent_level = match.group(1).count('>')
+            indent_level = match.group(2).count('>')
             if indent_level not in self.indent_levels:
                 self.indent_levels.append(indent_level)
             return self._parse_block_syntax(match)
@@ -116,17 +122,26 @@ class CalloutParser:
         """
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
         if match and self.indent_levels:
-            # Get the last indent level and remove any higher levels when the current line
+            # Group 1: Leading whitespace (we need to reuse tabs and 4x spaces)
+            whitespace = match.group(1).replace('    ', '\t')
+            whitespace = re.sub(r'[^\t]', '', whitespace)
+
+            # Remove any higher levels whilst the current line
             # has a lower indent level than the last line.
-            while match.group(1).count('>') < self.indent_levels[-1]:
+            while match.group(2).count('>') < self.indent_levels[-1]:
                 self.indent_levels = self.indent_levels[:-1]
-            indent = '\t' * self.indent_levels[-1]
-            line = re.sub(rf'^ ?(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
+            indent = '\t' * (self.indent_levels[-1] + whitespace.count('\t'))
+            line = re.sub(rf'^\s*(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
+
+            # Handle breakless lists before returning the line, if enabled
+            if self.breakless_lists:
+                line = self._breakless_list_handler(line)
         else:
+            # Reset the relevant variables
             self.indent_levels = list()
-        # Handle breakless lists before returning the line, if enabled
-        if self.breakless_lists:
-            line = self._breakless_list_handler(line)
+            # These are unused if breakless_lists is disabled
+            self.list_in_prev_line = False
+            self.text_in_prev_line = False
         return line
 
     def convert_line(self, line: str) -> str:
@@ -135,7 +150,11 @@ class CalloutParser:
         returns _convert_block if line matches that of a callout block syntax,
         if line is not a block syntax, it will return _convert_content.
         """
-        if line.startswith('```'):
+        # Toggle in_codefence if line contains a codefence
+        if re.match(r'^\s*```', line):
+            # TODO: Might be _almost_ impossible to do, but at the moment having a codefence containing
+            #       callout syntax inside a callout block will convert the callout syntax within the codefence.
+            #       (Extremely unlikely scenario, but still)
             self.in_codefence = not self.in_codefence
         if self.in_codefence:
             # Reset the indent levels if the callout is inside a codefence
