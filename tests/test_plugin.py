@@ -245,11 +245,18 @@ def test_breakless_lists():
     result = '!!! info\n\ttext\n\t\n\t1. item 1\n\t2. item 2'
     assert (parser.parse(mkdown) == result)
 
+    # Non-lists that look like lists
+    mkdown = '> [!INFO]\n> text\n> *Not a list*\n> text\n> *: Not a list'
+    result = '!!! info\n\ttext\n\t*Not a list*\n\ttext\n\t*: Not a list'
+    assert (parser.parse(mkdown) == result)
+
+
 def test_edgecase_in_nested_callouts():
     # Go from 1, 2, 3 callouts back to 1
     mkdown = '> [!INFO]\n> > [!INFO]\n> > > [!INFO]\n> > > Text\n> Text'
     result = '!!! info\n\t!!! info\n\t\t!!! info\n\t\t\tText\n\tText'
     assert (convert(mkdown) == result)
+
 
 def test_callout_in_codeblocks():
     mkdown = '```markdown\n> [!INFO]\n> Text\n```'
@@ -265,6 +272,7 @@ def test_callout_in_codeblocks():
     assert (convert(mkdown) == result)
 
 
+# TODO: We could handle this edgecase, but it's probably not worth the effort
 @pytest.mark.xfail
 def test_callout_in_codeblocks_within_callout():
     # A codefence within a callout containing a callout will still be converted
@@ -272,4 +280,30 @@ def test_callout_in_codeblocks_within_callout():
     # Given how unlikely it is to occur in practice
     mkdown = '> [!INFO]\n> ```\n> [!INFO]\n> ```'
     result = '!!! info\n\t```\n> [!INFO]\n\t```'
+    assert (convert(mkdown) == result)
+
+
+def test_content_tabs():
+    # Spaces are converted to tabs, which get preserved in the output
+    mkdown = '=== "rendered"\n\n    > [!note] Custom title here\n    > Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+    result = '=== "rendered"\n\n\t!!! note "Custom title here"\n\t\tLorem ipsum dolor sit amet, consectetur adipiscing elit.'
+    assert (convert(mkdown) == result)
+
+    # Codefences don't get converted
+    mkdown = '=== "source"\n\n    ```markdown\n    > [!note] Custom title here\n    > Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n    ```'
+    result = '=== "source"\n\n    ```markdown\n    > [!note] Custom title here\n    > Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n    ```'
+    assert (convert(mkdown) == result)
+
+    # Embedded content works as well
+    mkdown = '> [!NOTE]\n>\t=== "test"'
+    result = '!!! note\n\t\t=== "test"'
+    assert (convert(mkdown) == result)
+
+    # Embedded content with nested callouts will "work", but the formatting isn't really intuitive
+    # (Can't use > for the content tab callout, has to be tabs or spaces)
+    # Though this is a very unlikely edgecase and one should probably just use the standard syntax
+    # shown in the documentation (https://squidfunk.github.io/mkdocs-material/reference/content-tabs/#embedded-content)
+    # Example:
+    mkdown = '> [!NOTE]\n\t=== "test"\n\t\t> [!NOTE]\n\t\t> Text'
+    result = '!!! note\n\t=== "test"\n\t\t!!! note\n\t\t\tText'
     assert (convert(mkdown) == result)
