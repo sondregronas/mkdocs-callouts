@@ -307,3 +307,26 @@ def test_content_tabs():
     mkdown = '> [!NOTE]\n\t=== "test"\n\t\t> [!NOTE]\n\t\t> Text'
     result = '!!! note\n\t=== "test"\n\t\t!!! note\n\t\t\tText'
     assert (convert(mkdown) == result)
+
+
+def test_callout_within_blockquotes():
+    # https://github.com/sondregronas/mkdocs-callouts/issues/13
+    mkdown = '> > [!NOTE]\n> > Text'
+    result = '> > [!NOTE]\n> > Text'
+    assert (convert(mkdown) == result)
+
+    mkdown = '> ```\n> > [!NOTE]\n> > Text\n> ```'
+    result = '> ```\n> > [!NOTE]\n> > Text\n> ```'
+    assert (convert(mkdown) == result)
+
+
+def test_invalid_callout_syntax_within_blockquote():
+    # This is incorrect syntax for a callout within a codefence within a blockquote,
+    # but it's still valid markdown and should be preserved
+    mkdown = '> ```\n> [!NOTE]\n> Text\n> ```'
+    result = '> ```\n> [!NOTE]\n> Text\n> ```'
+    assert (convert(mkdown) == result)
+
+    mkdown = '> > [!NOTE]\n> > Text'
+    result = '> > [!NOTE]\n> > Text'
+    assert (convert(mkdown) == result)

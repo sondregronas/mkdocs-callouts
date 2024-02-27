@@ -110,6 +110,9 @@ class CalloutParser:
         if match:
             # Store the current indent level and add it to the list if it doesn't exist
             indent_level = match.group(2).count('>')
+            # Guard clause to prevent non-callout blocks from being converted (e.g. code blocks)
+            if 1 not in self.indent_levels and indent_level != 1:
+                return line
             if indent_level not in self.indent_levels:
                 self.indent_levels.append(indent_level)
             return self._parse_block_syntax(match)
@@ -151,7 +154,8 @@ class CalloutParser:
         if line is not a block syntax, it will return _convert_content.
         """
         # Toggle in_codefence if line contains a codefence
-        if re.match(r'^\s*```', line):
+        # (If a line contains '```' before any meaningful content, it's a codefence)
+        if re.match(r'^\s*(?:>\s*)*```', line):
             # TODO: Might be _almost_ impossible to do, but at the moment having a codefence containing
             #       callout syntax inside a callout block will convert the callout syntax within the codefence.
             #       (Extremely unlikely scenario, but still)
