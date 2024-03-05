@@ -272,14 +272,9 @@ def test_callout_in_codeblocks():
     assert (convert(mkdown) == result)
 
 
-# TODO: We could handle this edgecase, but it's probably not worth the effort
-@pytest.mark.xfail
 def test_callout_in_codeblocks_within_callout():
-    # A codefence within a callout containing a callout will still be converted
-    # Though it's probably not worth the effort to handle this edgecase in the parser
-    # Given how unlikely it is to occur in practice
-    mkdown = '> [!INFO]\n> ```\n> [!INFO]\n> ```'
-    result = '!!! info\n\t```\n> [!INFO]\n\t```'
+    mkdown = '> [!INFO]\n> ```\n> > [!INFO]\n> ```'
+    result = '!!! info\n\t```\n\t> [!INFO]\n\t```'
     assert (convert(mkdown) == result)
 
 

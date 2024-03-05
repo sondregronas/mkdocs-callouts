@@ -156,13 +156,10 @@ class CalloutParser:
         # Toggle in_codefence if line contains a codefence
         # (If a line contains '```' before any meaningful content, it's a codefence)
         if re.match(r'^\s*(?:>\s*)*```', line):
-            # TODO: Might be _almost_ impossible to do, but at the moment having a codefence containing
-            #       callout syntax inside a callout block will convert the callout syntax within the codefence.
-            #       (Extremely unlikely scenario, but still)
             self.in_codefence = not self.in_codefence
-        if self.in_codefence:
-            # Reset the indent levels if the callout is inside a codefence
-            self.indent_levels = list()
+        if self.in_codefence and self.indent_levels:
+            return self._convert_content(line)
+        elif self.in_codefence:
             return line
         return self._convert_block(line) or self._convert_content(line)
 
