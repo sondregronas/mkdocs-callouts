@@ -76,7 +76,7 @@ class CalloutParser:
 
         # Modify the indentation if the callout is inside a blockquote
         if self.in_blockquote:
-            indent = indent.replace("\t", "> ", self.indent_levels[-1] - 1)
+            indent = indent.replace("\t", ">", self.indent_levels[-1] - 1)
 
         # Construct the new callout syntax ({indent}!!! note "Title")
         return f'{whitespace}{indent}{syntax} {c_type}{title}'
@@ -120,6 +120,9 @@ class CalloutParser:
             # are inside a blockquote (e.g. > > [!info] Information = a callout inside a blockquote)
             if 1 not in self.indent_levels and indent_level > 1:
                 self.in_blockquote = True
+            if indent_level == 1 and 1 not in self.indent_levels:
+                self._reset_states()
+                self.in_blockquote = False
 
             # If the indent level is not in the indent levels, add it to the list
             if indent_level not in self.indent_levels:
@@ -143,7 +146,8 @@ class CalloutParser:
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
         if match and self.indent_levels:
             # If we are inside a blockquote and the line has a different indent level than the last line, reset
-            if self.in_blockquote and match.group(2).count('>') not in self.indent_levels:
+            # Ignore if we are inside a codefence
+            if self.in_blockquote and match.group(2).count('>') not in self.indent_levels and not self.in_codefence:
                 self._reset_states()
                 return line
 
@@ -160,7 +164,10 @@ class CalloutParser:
 
             # Modify the indentation if the callout is inside a blockquote
             if self.in_blockquote:
-                indent = indent.replace("\t", "> ", self.indent_levels[-1] - 1)
+                indent = indent.replace("\t", ">", max(self.indent_levels[-1] - 2, 1))
+                if self.indent_levels[-1] - 1 == 1:
+                    # Callouts with only one '>' symbol inside blockquotes need an extra '\t' for some reason (?)
+                    indent = f'{indent}\t'
 
             line = re.sub(rf'^\s*(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
 
