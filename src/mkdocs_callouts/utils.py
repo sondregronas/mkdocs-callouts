@@ -142,7 +142,7 @@ class CalloutParser:
         """
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
         if match and self.indent_levels:
-            # If we are inside a blockquote and the line only has a single '>' symbol, we are done
+            # If we are inside a blockquote and the line has a different indent level than the last line, reset
             if self.in_blockquote and match.group(2).count('>') != self.indent_levels[-1]:
                 self._reset_states()
                 return line
