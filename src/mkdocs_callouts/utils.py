@@ -42,6 +42,7 @@ class CalloutParser:
 
         # Check that the callout isn't inside a codefence
         self.in_codefence: bool = False
+        self.in_blockquote: bool = False
 
     def _parse_block_syntax(self, block) -> str:
         """
@@ -72,6 +73,10 @@ class CalloutParser:
         # Group 5: Title, add leading whitespace and quotation marks, if it exists
         title = block.group(5).strip()
         title = f' "{title}"' if title else ''
+
+        # Modify the indentation if the callout is inside a blockquote
+        if self.in_blockquote:
+            indent = indent.replace("\t", "> ", self.indent_levels[-1] - 1)
 
         # Construct the new callout syntax ({indent}!!! note "Title")
         return f'{whitespace}{indent}{syntax} {c_type}{title}'
@@ -110,12 +115,24 @@ class CalloutParser:
         if match:
             # Store the current indent level and add it to the list if it doesn't exist
             indent_level = match.group(2).count('>')
-            # Guard clause to prevent non-callout blocks from being converted (e.g. code blocks)
-            if 1 not in self.indent_levels and indent_level != 1:
-                return line
+
+            # If we do not have 1 in the indent_levels and the indent level is 1 more than the last level, we
+            # are inside a blockquote (e.g. > > [!info] Information = a callout inside a blockquote)
+            if 1 not in self.indent_levels and indent_level > 1:
+                self.in_blockquote = True
+
+            # If the indent level is not in the indent levels, add it to the list
             if indent_level not in self.indent_levels:
                 self.indent_levels.append(indent_level)
             return self._parse_block_syntax(match)
+
+    def _reset_states(self):
+        # Reset the relevant variables
+        self.indent_levels = list()
+        self.in_blockquote = False
+        # These are unused if breakless_lists is disabled
+        self.list_in_prev_line = False
+        self.text_in_prev_line = False
 
     def _convert_content(self, line: str) -> str:
         """
@@ -125,6 +142,11 @@ class CalloutParser:
         """
         match = re.search(CALLOUT_CONTENT_SYNTAX_REGEX, line)
         if match and self.indent_levels:
+            # If we are inside a blockquote and the line only has a single '>' symbol, we are done
+            if self.in_blockquote and match.group(2).count('>') != self.indent_levels[-1]:
+                self._reset_states()
+                return line
+
             # Group 1: Leading whitespace (we need to reuse tabs and 4x spaces)
             whitespace = match.group(1).replace('    ', '\t')
             whitespace = re.sub(r'[^\t]', '', whitespace)
@@ -133,18 +155,20 @@ class CalloutParser:
             # has a lower indent level than the last line.
             while match.group(2).count('>') < self.indent_levels[-1]:
                 self.indent_levels = self.indent_levels[:-1]
+
             indent = '\t' * (self.indent_levels[-1] + whitespace.count('\t'))
+
+            # Modify the indentation if the callout is inside a blockquote
+            if self.in_blockquote:
+                indent = indent.replace("\t", "> ", self.indent_levels[-1] - 1)
+
             line = re.sub(rf'^\s*(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
 
             # Handle breakless lists before returning the line, if enabled
             if self.breakless_lists:
                 line = self._breakless_list_handler(line)
         else:
-            # Reset the relevant variables
-            self.indent_levels = list()
-            # These are unused if breakless_lists is disabled
-            self.list_in_prev_line = False
-            self.text_in_prev_line = False
+            self._reset_states()
         return line
 
     def convert_line(self, line: str) -> str:
