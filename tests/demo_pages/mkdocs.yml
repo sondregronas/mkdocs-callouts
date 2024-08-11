@@ -1,0 +1,35 @@
+site_name: mkdocs-callouts
+theme:
+    name: material
+
+    palette:
+      - media: "(prefers-color-scheme: light)"  # Light mode
+        scheme: default
+        primary: light blue
+        accent: cyan
+        toggle:
+          icon: material/brightness-7
+          name: Switch to dark mode
+      - media: "(prefers-color-scheme: dark)"  # Dark mode
+        scheme: slate
+        primary: light blue
+        accent: cyan
+        toggle:
+          icon: material/brightness-4
+          name: Light mode
+
+markdown_extensions:
+  - nl2br
+  - admonition
+  - pymdownx.magiclink
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+  - callouts
+
+extra_css:
+  - extra.css
