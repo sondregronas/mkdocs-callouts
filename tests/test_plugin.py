@@ -37,6 +37,8 @@ def test_false_positives():
     result = '> [[Wikilink]] in a block\n> [Link](https://example.com)'
     assert (convert(mkdown) == result)
 
+
+def test_custom_blocks():
     # Test non-callout blocks
     mkdown = '> [!custom] Callout\n> Callout Text\nSome text\n> Block'
     result = '!!! custom "Callout"\n\tCallout Text\nSome text\n> Block'
@@ -307,7 +309,7 @@ def test_content_tabs():
 def test_callout_within_blockquotes():
     # https://github.com/sondregronas/mkdocs-callouts/issues/13
     mkdown = '> > [!NOTE]\n> > Text'
-    result = '>!!! note\n>\t\tText'
+    result = '> !!! note\n> \t\tText'
     assert (convert(mkdown) == result)
 
     mkdown = '> ```\n> > [!NOTE]\n> > Text\n> ```'
@@ -323,19 +325,19 @@ def test_invalid_callout_syntax_within_blockquote():
     assert (convert(mkdown) == result)
 
     mkdown = '> > [!NOTE]\n> > Text'
-    result = '>!!! note\n>\t\tText'
+    result = '> !!! note\n> \t\tText'
     assert (convert(mkdown) == result)
 
 
 def test_nested_blockquote():
     mkdown = '> > blockquote\n> > > [!NOTE]\n> > > Text\n> > blockquote'
-    result = '> > blockquote\n>>!!! note\n>\t\tText\n> > blockquote'
+    result = '> > blockquote\n> > !!! note\n> > \tText\n> > blockquote'
     assert (convert(mkdown) == result)
 
     mkdown = '> > > > > [!NOTE]\n> > > > > Text'
-    result = '>>>>!!! note\n>>>\t\tText'
+    result = '> > > > !!! note\n> > > > \tText'
     assert (convert(mkdown) == result)
 
     mkdown = '> > > Blockquote\n> > > > > Blockquote\n> > > > > > [!NOTE]\n> > > > > > Text\n> > Blockquote\n> > Blockquote'
-    result = '> > > Blockquote\n> > > > > Blockquote\n>>>>>!!! note\n>>>>\t\tText\n> > Blockquote\n> > Blockquote'
+    result = '> > > Blockquote\n> > > > > Blockquote\n> > > > > !!! note\n> > > > > \t\tText\n> > Blockquote\n> > Blockquote'
     assert (convert(mkdown) == result)
