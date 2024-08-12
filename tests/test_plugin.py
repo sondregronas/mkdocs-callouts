@@ -1,5 +1,3 @@
-import pytest
-
 from mkdocs_callouts.plugin import CalloutsPlugin
 from mkdocs_callouts.utils import CalloutParser
 
@@ -197,7 +195,6 @@ def test_nested_callouts_with_spaces():
     result = '!!! info\n\t!!! info'
     assert (parser.parse(mkdown) == result)
 
-
     mkdown = '> [!INFO]\n> > [!INFO] Title\n> > > [!INFO]\n> [!INFO]\n > [!INFO]'
     result = '!!! info\n\t!!! info "Title"\n\t\t!!! info\n!!! info\n!!! info'
     assert (parser.parse(mkdown) == result)
@@ -309,11 +306,37 @@ def test_content_tabs():
 def test_callout_within_blockquotes():
     # https://github.com/sondregronas/mkdocs-callouts/issues/13
     mkdown = '> > [!NOTE]\n> > Text'
-    result = '> !!! note\n> \t\tText'
+    result = '> !!! note\n>     Text'  # Spaces instead of tabs for blockquotes
     assert (convert(mkdown) == result)
 
     mkdown = '> ```\n> > [!NOTE]\n> > Text\n> ```'
     result = '> ```\n> > [!NOTE]\n> > Text\n> ```'
+    assert (convert(mkdown) == result)
+
+    mkdown = '> [!NOTE]\n> Text inside first note\n> > Blockquote\n> > > [!NOTE]\n> > > Text inside second note'
+    result = '!!! note\n\tText inside first note\n\t> Blockquote\n    > !!! note\n    >     Text inside second note'
+    assert (convert(mkdown) == result)
+
+    mkdown = """\
+> [!NOTE]
+> Text
+> > [!NOTE]
+> > Text
+> > > Blockquote
+> > > > [!NOTE]
+> > > > Text
+> > Text
+> Text"""
+    result = """\
+!!! note
+\tText
+\t!!! note
+\t\tText
+\t\t> Blockquote
+        > !!! note
+        >     Text
+\t\tText
+\tText"""
     assert (convert(mkdown) == result)
 
 
@@ -325,19 +348,44 @@ def test_invalid_callout_syntax_within_blockquote():
     assert (convert(mkdown) == result)
 
     mkdown = '> > [!NOTE]\n> > Text'
-    result = '> !!! note\n> \t\tText'
+    result = '> !!! note\n>     Text'  # Spaces instead of tabs for blockquotes
     assert (convert(mkdown) == result)
 
 
 def test_nested_blockquote():
     mkdown = '> > blockquote\n> > > [!NOTE]\n> > > Text\n> > blockquote'
-    result = '> > blockquote\n> > !!! note\n> > \tText\n> > blockquote'
+    result = '> > blockquote\n> > !!! note\n> >     Text\n> > blockquote'
     assert (convert(mkdown) == result)
 
     mkdown = '> > > > > [!NOTE]\n> > > > > Text'
-    result = '> > > > !!! note\n> > > > \tText'
+    result = '> > > > !!! note\n> > > >     Text'
     assert (convert(mkdown) == result)
 
     mkdown = '> > > Blockquote\n> > > > > Blockquote\n> > > > > > [!NOTE]\n> > > > > > Text\n> > Blockquote\n> > Blockquote'
-    result = '> > > Blockquote\n> > > > > Blockquote\n> > > > > !!! note\n> > > > > \t\tText\n> > Blockquote\n> > Blockquote'
+    result = '> > > Blockquote\n> > > > > Blockquote\n> > > > > !!! note\n> > > > >     Text\n> > Blockquote\n> > Blockquote'
+    assert (convert(mkdown) == result)
+
+
+def test_tricky_blockquote():
+    # Ensure the spaces are consistent within blockquotes
+    mkdown = """\
+> > [!NOTE]
+> > > Blockquote inside a note
+> > > > [!WARNING]
+> > > > This should be inside the warning callout
+> > > > > [!TIP] This should be a callout
+> > > > > This should be inside the tip callout
+> > > > > > > > > [!DANGER]
+> > > > > > > > > > Blockquote
+> > [!TIP]"""
+    result = """\
+> !!! note
+>     > Blockquote inside a note
+>     > !!! warning
+>     >     This should be inside the warning callout
+>     >     !!! tip "This should be a callout"
+>     >         This should be inside the tip callout
+>     >         > > > !!! danger
+>     >         > > >     > Blockquote
+> !!! tip"""
     assert (convert(mkdown) == result)

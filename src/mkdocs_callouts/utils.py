@@ -8,6 +8,8 @@ CALLOUT_BLOCK_REGEX = re.compile(r'^(\s*)((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?
 # (5): title
 
 CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^(\s*)((?:> ?)+)')
+
+
 # (1): leading whitespace (all tabs and 4x spaces get reused)
 # (2): indents (all leading '>' symbols)
 
@@ -17,13 +19,13 @@ class CalloutParser:
     # From https://help.obsidian.md/How+to/Use+callouts#Types
     aliases = {
         'abstract': ['summary', 'tldr'],
-        'tip':      ['hint', 'important'],
-        'success':  ['check', 'done'],
+        'tip': ['hint', 'important'],
+        'success': ['check', 'done'],
         'question': ['help', 'faq'],
-        'warning':  ['caution', 'attention'],
-        'failure':  ['fail', 'missing'],
-        'danger':   ['error'],
-        'quote':    ['cite']
+        'warning': ['caution', 'attention'],
+        'failure': ['fail', 'missing'],
+        'danger': ['error'],
+        'quote': ['cite']
     }
     alias_tuples = [(alias, c_type) for c_type, aliases in aliases.items() for alias in aliases]
 
@@ -43,6 +45,25 @@ class CalloutParser:
         # Check that the callout isn't inside a codefence
         self.in_codefence: bool = False
 
+    def _get_indent(self, indent_level: int, is_block: bool = False) -> str:
+        """
+        Returns the correct indent string for the current indent level.
+        """
+        indent = ''
+        for i in range(indent_level - int(is_block)):
+            # If the indent level exists in the list, add a tab (callout), otherwise add a '> ' (blockquote)
+            indent += '\t' if i + 1 in self.indent_levels else '> '
+
+        # Blockquotes use spaces instead of tabs for consistent indentation (must be 4 spaces into the callout)
+        # When not using blockquotes, a tab should count as 4 spaces by default because of no preceding symbols
+        # blockquote:   > !!! note "Title"   ||   blockquote:   > !!! note "Title"
+        # with \t       > SSContent (wrong)  ||   with spaces   > SSSSContent (correct)
+        is_part_of_blockquote = '> ' in indent  # indent should only be '\t' symbols if false.
+        if is_part_of_blockquote:
+            indent = indent.replace('\t', ' ' * 4)
+
+        return indent
+
     def _parse_block_syntax(self, block) -> str:
         """
         Converts the callout syntax from obsidian into the mkdocs syntax
@@ -53,10 +74,8 @@ class CalloutParser:
         whitespace = '\t' * whitespace.count('\t')  # Ignore everything but tabs
 
         # Group 2: Leading > symbols (indentation, for nested callouts)
-        indent = whitespace
-        for i in range(block.group(2).count('>') - 1):
-            # Don't compete with blockquotes, only add tabs if the indent level exists in the list
-            indent += '\t' if i + 1 in self.indent_levels else '> '
+        indent_level = block.group(2).count('>')
+        indent = f'{whitespace}{self._get_indent(indent_level=indent_level, is_block=True)}'
 
         # Group 3: Callout block type (note, warning, info, etc.) + inline block syntax
         c_type = block.group(3).lower()
@@ -119,7 +138,9 @@ class CalloutParser:
             return self._parse_block_syntax(match)
 
     def _reset_states(self):
-        # Reset the relevant variables
+        """
+        Resets the states of the parser, including the indent levels and breakless list flags.
+        """
         self.indent_levels = list()
         # These are unused if breakless_lists is disabled
         self.list_in_prev_line = False
@@ -138,25 +159,18 @@ class CalloutParser:
             whitespace = '\t' * whitespace.count('\t')  # Ignore everything but tabs
 
             # Remove any higher level indents compared to the current indent level
+            # i.e. if we are at 1, and indent_levels is [1, 2, 3], remove 2 and 3
             try:
                 while match.group(2).count('>') < self.indent_levels[-1]:
                     self.indent_levels = self.indent_levels[:-1]
             except IndexError:
                 # If the indent levels list is empty, reset the states and return the line
-                # (we were in a codefence/blockquote)
+                # (we were in a blockquote, not a callout)
                 self._reset_states()
                 return line
 
             # Construct the new indent level
-            indent = whitespace
-            for i in range(max(self.indent_levels)):
-                # Don't compete with blockquotes, only add tabs if the indent level exists in the list
-                indent += '\t' if i + 1 in self.indent_levels else '> '
-
-            # Make sure the indent is a multiple of 4 spaces, if not, add an extra tab to offset it
-            # TODO: Might not be the correct behavior, but it was the only way I could get blockquotes to work reliably
-            if len(indent.replace('\t', ' ' * 4)) % 4 != 0:
-                indent += '\t'
+            indent = f'{whitespace}{self._get_indent(indent_level=max(self.indent_levels))}'
 
             line = re.sub(rf'^\s*(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
 
