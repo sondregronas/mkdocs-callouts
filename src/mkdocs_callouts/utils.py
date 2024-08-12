@@ -50,6 +50,7 @@ class CalloutParser:
         Returns the correct indent string for the current indent level.
         """
         indent = ''
+        # If we are parsing a block, then we should not add a tab for the last indent level (only content needs it)
         for i in range(indent_level - int(is_block)):
             # If the indent level exists in the list, add a tab (callout), otherwise add a '> ' (blockquote)
             indent += '\t' if i + 1 in self.indent_levels else '> '
