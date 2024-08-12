@@ -389,3 +389,17 @@ def test_tricky_blockquote():
 >     >         > > >     > Blockquote
 > !!! tip"""
     assert (convert(mkdown) == result)
+
+
+def test_nested_codefences():
+    # Test multiple levels of nested codefences (nothing should be converted)
+    mkdown = """\
+```md
+> [!NOTE]
+> A nested codefence inside a codefence
+> ```md
+> > [!NOTE]
+> > Text
+> ```
+```"""
+    assert (convert(mkdown) == mkdown)

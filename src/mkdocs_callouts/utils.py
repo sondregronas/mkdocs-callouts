@@ -42,8 +42,8 @@ class CalloutParser:
         self.text_in_prev_line: bool = False
         self.list_in_prev_line: bool = False
 
-        # Check that the callout isn't inside a codefence
-        self.in_codefence: bool = False
+        # Check that the callout isn't inside a codefence (list of codefence indices)
+        self.in_codefence: list = list()
 
     def _get_indent(self, indent_level: int, is_block: bool = False) -> str:
         """
@@ -181,17 +181,34 @@ class CalloutParser:
             self._reset_states()
         return line
 
+    def _toggle_codefence_at_index(self, index: int):
+        """
+        Adds or removes a codefence index to the list of active codefences.
+
+        Only keeps track of 2 values, a primary one and a nested one.
+        - 0 = primary codefence
+        - 1 = nested codefence
+
+        We could keep track of all indices, but it might cause more issues than it solves. (even though it shouldn't)
+        """
+        if index != 0:
+            index = 1
+        if index in self.in_codefence:
+            self.in_codefence.remove(index)
+        else:
+            self.in_codefence.append(index)
+
     def convert_line(self, line: str) -> str:
         """
         Converts the syntax for callouts to admonitions for a single line of markdown
         returns _convert_block if line matches that of a callout block syntax,
         if line is not a block syntax, it will return _convert_content.
         """
-        # Toggle in_codefence if line contains a codefence
-        # (If a line contains '```' before any meaningful content, it's a codefence)
+        # Toggle codefence indices if we encounter a codefence
+        # (If a line starts with '```' before any meaningful content, it's a codefence)
         if re.match(r'^\s*(?:>\s*)*```', line):
-            # TODO: Keep track of codefence indentation level, so that we can nest codefences (not implemented)
-            self.in_codefence = not self.in_codefence
+            self._toggle_codefence_at_index(line.index('```'))
+        # Codefences get treated like content (because they could contain callouts inside them that should not convert)
         if self.in_codefence and self.indent_levels:
             return self._convert_content(line)
         elif self.in_codefence:
