@@ -8,6 +8,8 @@ CALLOUT_BLOCK_REGEX = re.compile(r'^(\s*)((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?
 # (5): title
 
 CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r'^(\s*)((?:> ?)+)')
+
+
 # (1): leading whitespace (all tabs and 4x spaces get reused)
 # (2): indents (all leading '>' symbols)
 
@@ -17,13 +19,13 @@ class CalloutParser:
     # From https://help.obsidian.md/How+to/Use+callouts#Types
     aliases = {
         'abstract': ['summary', 'tldr'],
-        'tip':      ['hint', 'important'],
-        'success':  ['check', 'done'],
+        'tip': ['hint', 'important'],
+        'success': ['check', 'done'],
         'question': ['help', 'faq'],
-        'warning':  ['caution', 'attention'],
-        'failure':  ['fail', 'missing'],
-        'danger':   ['error'],
-        'quote':    ['cite']
+        'warning': ['caution', 'attention'],
+        'failure': ['fail', 'missing'],
+        'danger': ['error'],
+        'quote': ['cite']
     }
     alias_tuples = [(alias, c_type) for c_type, aliases in aliases.items() for alias in aliases]
 
@@ -40,8 +42,28 @@ class CalloutParser:
         self.text_in_prev_line: bool = False
         self.list_in_prev_line: bool = False
 
-        # Check that the callout isn't inside a codefence
-        self.in_codefence: bool = False
+        # Check that the callout isn't inside a codefence (list of codefence indices)
+        self.in_codefence: list = list()
+
+    def _get_indent(self, indent_level: int, is_block: bool = False) -> str:
+        """
+        Returns the correct indent string for the current indent level.
+        """
+        indent = ''
+        # If we are parsing a block, then we should not add a tab for the last indent level (only content needs it)
+        for i in range(indent_level - int(is_block)):
+            # If the indent level exists in the list, add a tab (callout), otherwise add a '> ' (blockquote)
+            indent += '\t' if i + 1 in self.indent_levels else '> '
+
+        # Blockquotes use spaces instead of tabs for consistent indentation (must be 4 spaces into the callout)
+        # When not using blockquotes, a tab should count as 4 spaces by default because of no preceding symbols
+        # blockquote:   > !!! note "Title"   ||   blockquote:   > !!! note "Title"
+        # with \t       > SSContent (wrong)  ||   with spaces   > SSSSContent (correct)
+        is_part_of_blockquote = '> ' in indent  # indent should only be '\t' symbols if false.
+        if is_part_of_blockquote:
+            indent = indent.replace('\t', ' ' * 4)
+
+        return indent
 
     def _parse_block_syntax(self, block) -> str:
         """
@@ -50,11 +72,11 @@ class CalloutParser:
         """
         # Group 1: Leading whitespace (we need to reuse tabs and 4x spaces)
         whitespace = block.group(1).replace('    ', '\t')
-        whitespace = re.sub(r'[^\t]', '', whitespace)
+        whitespace = '\t' * whitespace.count('\t')  # Ignore everything but tabs
 
         # Group 2: Leading > symbols (indentation, for nested callouts)
-        indent = block.group(2).count('>')
-        indent = '\t' * (indent - 1)
+        indent_level = block.group(2).count('>')
+        indent = f'{whitespace}{self._get_indent(indent_level=indent_level, is_block=True)}'
 
         # Group 3: Callout block type (note, warning, info, etc.) + inline block syntax
         c_type = block.group(3).lower()
@@ -74,7 +96,7 @@ class CalloutParser:
         title = f' "{title}"' if title else ''
 
         # Construct the new callout syntax ({indent}!!! note "Title")
-        return f'{whitespace}{indent}{syntax} {c_type}{title}'
+        return f'{indent}{syntax} {c_type}{title}'
 
     @staticmethod
     def _convert_aliases(c_type: str) -> str:
@@ -110,12 +132,20 @@ class CalloutParser:
         if match:
             # Store the current indent level and add it to the list if it doesn't exist
             indent_level = match.group(2).count('>')
-            # Guard clause to prevent non-callout blocks from being converted (e.g. code blocks)
-            if 1 not in self.indent_levels and indent_level != 1:
-                return line
+
+            # If the indent level is not in the indent levels, add it to the list
             if indent_level not in self.indent_levels:
                 self.indent_levels.append(indent_level)
             return self._parse_block_syntax(match)
+
+    def _reset_states(self):
+        """
+        Resets the states of the parser, including the indent levels and breakless list flags.
+        """
+        self.indent_levels = list()
+        # These are unused if breakless_lists is disabled
+        self.list_in_prev_line = False
+        self.text_in_prev_line = False
 
     def _convert_content(self, line: str) -> str:
         """
@@ -127,25 +157,47 @@ class CalloutParser:
         if match and self.indent_levels:
             # Group 1: Leading whitespace (we need to reuse tabs and 4x spaces)
             whitespace = match.group(1).replace('    ', '\t')
-            whitespace = re.sub(r'[^\t]', '', whitespace)
+            whitespace = '\t' * whitespace.count('\t')  # Ignore everything but tabs
 
-            # Remove any higher levels whilst the current line
-            # has a lower indent level than the last line.
-            while match.group(2).count('>') < self.indent_levels[-1]:
-                self.indent_levels = self.indent_levels[:-1]
-            indent = '\t' * (self.indent_levels[-1] + whitespace.count('\t'))
+            # Remove any higher level indents compared to the current indent level
+            # i.e. if we are at 1, and indent_levels is [1, 2, 3], remove 2 and 3
+            try:
+                while match.group(2).count('>') < self.indent_levels[-1]:
+                    self.indent_levels = self.indent_levels[:-1]
+            except IndexError:
+                # If the indent levels list is empty, reset the states and return the line
+                # (we were in a blockquote, not a callout)
+                self._reset_states()
+                return line
+
+            # Construct the new indent level
+            indent = f'{whitespace}{self._get_indent(indent_level=max(self.indent_levels))}'
+
             line = re.sub(rf'^\s*(?:> ?){{{self.indent_levels[-1]}}} ?', indent, line)
 
             # Handle breakless lists before returning the line, if enabled
             if self.breakless_lists:
                 line = self._breakless_list_handler(line)
         else:
-            # Reset the relevant variables
-            self.indent_levels = list()
-            # These are unused if breakless_lists is disabled
-            self.list_in_prev_line = False
-            self.text_in_prev_line = False
+            self._reset_states()
         return line
+
+    def _toggle_codefence_at_index(self, index: int):
+        """
+        Adds or removes a codefence index to the list of active codefences.
+
+        Only keeps track of 2 values, a primary one and a nested one.
+        - 0 = primary codefence
+        - 1 = nested codefence
+
+        We could keep track of all indices, but it might cause more issues than it solves. (even though it shouldn't)
+        """
+        if index != 0:
+            index = 1
+        if index in self.in_codefence:
+            self.in_codefence.remove(index)
+        else:
+            self.in_codefence.append(index)
 
     def convert_line(self, line: str) -> str:
         """
@@ -153,10 +205,11 @@ class CalloutParser:
         returns _convert_block if line matches that of a callout block syntax,
         if line is not a block syntax, it will return _convert_content.
         """
-        # Toggle in_codefence if line contains a codefence
-        # (If a line contains '```' before any meaningful content, it's a codefence)
+        # Toggle codefence indices if we encounter a codefence
+        # (If a line starts with '```' before any meaningful content, it's a codefence)
         if re.match(r'^\s*(?:>\s*)*```', line):
-            self.in_codefence = not self.in_codefence
+            self._toggle_codefence_at_index(line.index('```'))
+        # Codefences get treated like content (because they could contain callouts inside them that should not convert)
         if self.in_codefence and self.indent_levels:
             return self._convert_content(line)
         elif self.in_codefence:
