@@ -182,7 +182,7 @@ class CalloutParser:
                 f"{whitespace}{self._get_indent(indent_level=max(self.indent_levels))}"
             )
 
-            line = re.sub(rf"^\s*(?:> ?){{{self.indent_levels[-1]}}} ?", indent, line)
+            line = re.sub(rf"^\s*(?:> ?){{{self.indent_levels[-1]}}}", indent, line)
 
             # Handle breakless lists before returning the line, if enabled
             if self.breakless_lists:
