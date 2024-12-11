@@ -146,12 +146,12 @@ def test_aliases_enabled():
 
     # Test alias conversion
     mkdown = '> [!HINT]\n> Text'
-    result = '!!! tip\n\tText'
+    result = '!!! tip "Hint"\n\tText'
     assert (parser.parse(mkdown) == result)
 
     # Test alias conversion with inline block syntax
     mkdown = '> [!HINT | inline]\n> Text'
-    result = '!!! tip inline\n\tText'
+    result = '!!! tip inline "Hint"\n\tText'
     assert (parser.parse(mkdown) == result)
 
     # Test alias conversion where alias is a substring of another alias
@@ -403,3 +403,35 @@ def test_nested_codefences():
 > ```
 ```"""
     assert (convert(mkdown) == mkdown)
+
+
+def test_alias_titles():
+    # Test alias titles
+    mkdown = "> [!cAuTiON]"
+    result = "!!! warning \"Caution\""
+
+    assert (convert(mkdown) == result)
+
+    # Test normal titles
+    mkdown = "> [!WARNING]"
+    result = "!!! warning"
+
+    assert (convert(mkdown) == result)
+
+    # Test with inline block syntax
+    mkdown = "> [!WaRnINg | inline]"
+    result = "!!! warning inline"
+
+    assert (convert(mkdown) == result)
+
+    # Test alias titles with inline block syntax
+    mkdown = "> [!cAuTiON | inline]"
+    result = "!!! warning inline \"Caution\""
+
+    assert (convert(mkdown) == result)
+
+    # Test alias with a title
+    mkdown = "> [!cAuTiON] Title"
+    result = "!!! warning \"Title\""
+
+    assert (convert(mkdown) == result)
