@@ -87,6 +87,9 @@ class CalloutParser:
 
         # Group 3: Callout block type (note, warning, info, etc.) + inline block syntax
         c_type = block.group(3).lower()
+        # Get a clean version of the callout type for the title, if it exists in order
+        # to use it as a fallback if the title is empty & we are using an alias
+        clean_c_type = c_type.split("|")[0].strip()
         c_type = re.sub(r" *\| *(inline|left) *$", " inline", c_type)
         c_type = re.sub(r" *\| *(inline end|right) *$", " inline end", c_type)
         c_type = re.sub(r" *\|.*", "", c_type)
@@ -100,6 +103,10 @@ class CalloutParser:
 
         # Group 5: Title, add leading whitespace and quotation marks, if it exists
         title = block.group(5).strip()
+        # If we are using an alias without a title, use the alias
+        # We use startswith to avoid issues with the inline block syntax
+        if not title and not c_type.lower().startswith(clean_c_type.lower()):
+            title = clean_c_type.capitalize()
         title = f' "{title}"' if title else ""
 
         # Construct the new callout syntax ({indent}!!! note "Title")
