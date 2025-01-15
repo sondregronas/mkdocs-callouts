@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-callouts"
-version = "1.15.0"
+version = "1.16.0"
 keywords = ["mkdocs", "mkdocs-plugin", "markdown", "callouts", "admonitions", "obsidian"]
 description = "A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported 'admonitions' (a.k.a. callouts)."
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [{ name = "Sondre Grønås", email = "mail@sondregronas.com" }]
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",

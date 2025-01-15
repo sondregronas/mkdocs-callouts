@@ -435,3 +435,9 @@ def test_alias_titles():
     result = "!!! warning \"Title\""
 
     assert (convert(mkdown) == result)
+
+def test_callout_blank_title():
+    mkdown = "> [!note] \"\"\n> Text"
+    result = "!!! note \"\"\n\tText"
+
+    assert (convert(mkdown) == result)
