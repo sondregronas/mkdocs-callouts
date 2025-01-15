@@ -107,7 +107,14 @@ class CalloutParser:
         # We use startswith to avoid issues with the inline block syntax
         if not title and not c_type.lower().startswith(clean_c_type.lower()):
             title = clean_c_type.capitalize()
-        title = f' "{title}"' if title else ""
+
+        # Render the title according to the syntax
+        if title in ['""', "''"]:
+            title = ' ""'  # Quotes = does not render the heading, only block content
+        elif title:
+            title = f' "{title}"'  # Title was provided, add quotation marks
+        else:
+            title = ""  # No title provided, use the default (Note, Warning, etc.)
 
         # Construct the new callout syntax ({indent}!!! note "Title")
         return f"{indent}{syntax} {c_type}{title}"
