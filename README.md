@@ -5,7 +5,10 @@
 ![MIT license](https://img.shields.io/github/license/sondregronas/mkdocs-callouts)
 [![codecov](https://codecov.io/gh/sondregronas/mkdocs-callouts/branch/main/graph/badge.svg?token=N5IDI7Q4NZ)](https://codecov.io/gh/sondregronas/mkdocs-callouts)
 
-A simple plugin that converts Obsidian style callouts and converts them into mkdocs supported ['admonitions'](https://squidfunk.github.io/mkdocs-material/reference/admonitions/) (a.k.a. callouts).
+A simple plugin that converts [Obsidian](https://obsidian.md/) style callouts and converts them into mkdocs supported ['admonitions'](https://squidfunk.github.io/mkdocs-material/reference/admonitions/) (a.k.a. callouts).
+
+> [!NOTE]
+> For GitHub's callout syntax, this markdown extension might be what you want instead: https://github.com/dahlia/markdown-gfm-admonition
 
 ## Setup
 Install the plugin using pip:
