@@ -22,7 +22,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "mkdocs>=1"
+    "mkdocs-ng"
 ]
 
 [project.urls]
