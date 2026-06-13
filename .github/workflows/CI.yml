@@ -35,6 +35,6 @@ jobs:
           pip install -e .[dev]
           python -m pytest tests/test_plugin.py --cov=mkdocs_callouts --cov-report=xml
 
-      - uses: codecov/codecov-action@v6
+      - uses: codecov/codecov-action@v7
         with:
           file: ./coverage.xml
