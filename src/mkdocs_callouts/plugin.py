@@ -17,14 +17,17 @@ class CalloutsPlugin(BasePlugin):
            Allowing you to edit your notes
            with confidence using Obsidian.
     """
+
     config_scheme = {  # pragma: no cover
-        ('aliases', config_options.Type(bool, default=True)),
-        ('breakless_lists', config_options.Type(bool, default=True))
+        ("aliases", config_options.Type(bool, default=True)),
+        ("breakless_lists", config_options.Type(bool, default=True)),
+        ("title_from_first_bold", config_options.Type(bool, default=False)),
     }
 
     def on_page_markdown(self, markdown, page, config, files):
         parser = CalloutParser(
-            convert_aliases=self.config.get('aliases', True),
-            breakless_lists=self.config.get('breakless_lists', True)
+            convert_aliases=self.config.get("aliases", True),
+            breakless_lists=self.config.get("breakless_lists", True),
+            title_from_first_bold=self.config.get("title_from_first_bold", False),
         )
         return parser.parse(markdown)
