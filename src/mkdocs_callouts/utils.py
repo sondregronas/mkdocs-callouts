@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 CALLOUT_BLOCK_REGEX = re.compile(r"^(\s*)((?:> ?)+) *\[!([^\]]*)\]([\-\+]?)(.*)?")
 # (1): leading whitespace (all tabs and 4x spaces get reused)
@@ -12,6 +13,9 @@ CALLOUT_CONTENT_SYNTAX_REGEX = re.compile(r"^(\s*)((?:> ?)+)")
 
 # (1): leading whitespace (all tabs and 4x spaces get reused)
 # (2): indents (all leading '>' symbols)
+
+# Allows us to proceed to the next line without adding a blank line in between (title_from_first_bold only)
+SKIP_LINE = ["SKIP_LINE"]
 
 
 class CalloutParser:
@@ -32,7 +36,12 @@ class CalloutParser:
         (alias, c_type) for c_type, aliases in aliases.items() for alias in aliases
     ]
 
-    def __init__(self, convert_aliases: bool = True, breakless_lists: bool = True):
+    def __init__(
+        self,
+        convert_aliases: bool = True,
+        breakless_lists: bool = True,
+        title_from_first_bold: bool = False,
+    ):
         # Stack to keep track of the current indentation level
         self.indent_levels: list[int] = list()
         # Whether to convert aliases or not
@@ -47,6 +56,11 @@ class CalloutParser:
 
         # Check that the callout isn't inside a codefence (list of codefence indices)
         self.in_codefence: list = list()
+        # Whether to use the first bold text as the title (config option)
+        self.title_from_first_bold: bool = title_from_first_bold
+        self.look_for_title: bool = False  # True if we just entered a block
+        self.backup_title: str = ""  # Backup title to use if no bold text is present
+        self.temp_block_syntax: str = ""
 
     def _get_indent(self, indent_level: int, is_block: bool = False) -> str:
         """
@@ -70,7 +84,7 @@ class CalloutParser:
 
         return indent
 
-    def _parse_block_syntax(self, block) -> str:
+    def _parse_block_syntax(self, block) -> str | list:
         """
         Converts the callout syntax from obsidian into the mkdocs syntax
         Takes an argument block, which is a regex match.
@@ -103,9 +117,11 @@ class CalloutParser:
 
         # Group 5: Title, add leading whitespace and quotation marks, if it exists
         title = block.group(5).strip()
+        title_exists = bool(title)
+
         # If we are using an alias without a title, use the alias
         # We use startswith to avoid issues with the inline block syntax
-        if not title and not c_type.lower().startswith(clean_c_type.lower()):
+        if not title_exists and not c_type.lower().startswith(clean_c_type.lower()):
             title = clean_c_type.capitalize()
 
         # Render the title according to the syntax
@@ -115,6 +131,12 @@ class CalloutParser:
             title = f' "{title}"'  # Title was provided, add quotation marks
         else:
             title = ""  # No title provided, use the default (Note, Warning, etc.)
+
+        if self.title_from_first_bold and not title_exists:
+            self.look_for_title = True
+            self.backup_title = title.strip()
+            self.temp_block_syntax = f"{indent}{syntax} {c_type}"
+            return SKIP_LINE
 
         # Construct the new callout syntax ({indent}!!! note "Title")
         return f"{indent}{syntax} {c_type}{title}"
@@ -147,7 +169,7 @@ class CalloutParser:
         self.list_in_prev_line = is_list
         return line
 
-    def _convert_block(self, line: str) -> str:
+    def _convert_block(self, line: str) -> Optional[str | list]:
         """Calls parse_block_syntax if regex matches, which returns a converted callout block"""
         match = re.search(CALLOUT_BLOCK_REGEX, line)
         if match:
@@ -164,6 +186,10 @@ class CalloutParser:
         Resets the states of the parser, including the indent levels and breakless list flags.
         """
         self.indent_levels = list()
+        # These values are only used if title_from_first_bold is enabled, but we reset them anyway
+        self.look_for_title = False
+        self.backup_title = ""
+        self.temp_block_syntax = ""
         # These are unused if breakless_lists is disabled
         self.list_in_prev_line = False
         self.text_in_prev_line = False
@@ -198,10 +224,27 @@ class CalloutParser:
 
             line = re.sub(rf"^\s*(?:> ?){{{self.indent_levels[-1]}}}", indent, line)
 
+            # If we are on the first line of a block, look for title in bold if enabled
+            if self.title_from_first_bold and self.look_for_title:
+                self.look_for_title = False
+                title = re.search(r"\s*\*\*(.+?)\*\*\s*$", line)
+                if title:
+                    line = f'{self.temp_block_syntax} "{title.group(1).strip()}"'
+                elif self.backup_title:
+                    line = f"{self.temp_block_syntax} {self.backup_title}\n{line}"
+                else:
+                    line = f"{self.temp_block_syntax}\n{line}"
+
             # Handle breakless lists before returning the line, if enabled
             if self.breakless_lists:
                 line = self._breakless_list_handler(line)
         else:
+            # If we were looking for a title, be sure to add the block syntax before the next line, if it exists
+            if self.title_from_first_bold and self.look_for_title:
+                if self.backup_title:
+                    line = f"{self.temp_block_syntax} {self.backup_title}\n{line}"
+                else:
+                    line = f"{self.temp_block_syntax}\n{line}"
             self._reset_states()
         return line
 
@@ -222,7 +265,7 @@ class CalloutParser:
         else:
             self.in_codefence.append(index)
 
-    def convert_line(self, line: str) -> str:
+    def convert_line(self, line: str) -> str | list:
         """
         Converts the syntax for callouts to admonitions for a single line of markdown
         returns _convert_block if line matches that of a callout block syntax,
@@ -245,5 +288,16 @@ class CalloutParser:
         # If markdown file does not contain a callout, skip it
         if not re.search(r"> *\[!", markdown):
             return markdown
-        # Convert markdown line by line, then return it
-        return "\n".join(self.convert_line(line) for line in markdown.split("\n"))
+        # Convert markdown line by line
+        lines = [self.convert_line(line) for line in markdown.split("\n")]
+        # If we are somehow still looking for a title for a block, append the block. (if enabled)
+        if (
+            self.title_from_first_bold
+            and self.temp_block_syntax
+            and self.look_for_title
+        ):
+            if self.backup_title:
+                lines += [f"{self.temp_block_syntax} {self.backup_title}"]
+            else:
+                lines += [self.temp_block_syntax]
+        return "\n".join([line for line in lines if isinstance(line, str)])

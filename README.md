@@ -26,7 +26,10 @@ markdown_extensions:
 
 plugins:
   - search
-  - callouts
+  - callouts:
+      aliases: true  # Enable/disable alias support (default: true)
+      breakless_lists: true  # Enable/disable breakless list support (default: true)
+      title_from_first_bold: false  # Use the first lone bold content as the title (default: false)
 ```
 
 > **Note:** If you have no `plugins` entry in your config file yet, you'll likely also want to add the `search` plugin. MkDocs enables it by default if there is no `plugins` entry set, but now you have to enable it explicitly.
@@ -75,11 +78,35 @@ plugins:
       aliases: false
 ```
 
-### Breakless lists (New in 1.11.0)
+### Breakless lists
 Markdown specification requires a blank line between list items and other block elements, whereas Obsidian does not require this. This plugin will by default automatically add a blank line between list items and callout blocks (if none are present). Should you wish to disable this behaviour then you can do so by setting `breakless_lists` to `false` in the plugin configuration:
+
 ```yaml
 plugins:
   - search
   - callouts:
       breakless_lists: false
+```
+
+### First bold line as title
+If the first line of a callout block is in bold, it can be used as the title for the admonition block. To enable this behaviour, set `first_bold_as_title` to `true` in the plugin configuration. Behavior is disabled by default, see #34
+
+```md
+> [!INFO]
+> **This is the title**
+> This is the content of the callout block.
+```
+
+Will render as:
+
+```md
+!!! info "This is the title"
+    This is the content of the callout block.
+```
+
+```yaml
+plugins:
+  - search
+  - callouts:
+      title_from_first_bold: true
 ```
