@@ -133,9 +133,18 @@ class CalloutParser:
             title = ""  # No title provided, use the default (Note, Warning, etc.)
 
         if self.title_from_first_bold and not title_exists:
+            # If we are already looking for a title, append the old block to the new block
+            if self.look_for_title:
+                if self.backup_title:
+                    self.temp_block_syntax += f" {self.backup_title}\n"
+                else:
+                    self.temp_block_syntax += "\n"
+            else:
+                self.temp_block_syntax = ""
+
             self.look_for_title = True
             self.backup_title = title.strip()
-            self.temp_block_syntax = f"{indent}{syntax} {c_type}"
+            self.temp_block_syntax += f"{indent}{syntax} {c_type}"
             return SKIP_LINE
 
         # Construct the new callout syntax ({indent}!!! note "Title")
@@ -227,7 +236,8 @@ class CalloutParser:
             # If we are on the first line of a block, look for title in bold if enabled
             if self.title_from_first_bold and self.look_for_title:
                 self.look_for_title = False
-                title = re.search(r"\s*\*\*(.+?)\*\*\s*$", line)
+                block_indent = self.temp_block_syntax.split("\n")[-1].count("\t") + 1
+                title = re.search(rf"^{'\t' * block_indent}\*\*(.+?)\*\*\s*$", line)
                 if title:
                     line = f'{self.temp_block_syntax} "{title.group(1).strip()}"'
                 elif self.backup_title:
@@ -284,7 +294,7 @@ class CalloutParser:
 
     def parse(self, markdown: str) -> str:
         """Takes a markdown file input returns a version with converted callout syntax"""
-        self.indent_levels = list()  # Reset (redundant in conjunction with mkdocs)
+        self._reset_states()  # Reset (redundant in conjunction with mkdocs)
         # If markdown file does not contain a callout, skip it
         if not re.search(r"> *\[!", markdown):
             return markdown
