@@ -136,9 +136,8 @@ class CalloutParser:
             # If we are already looking for a title, append the old block to the new block
             if self.look_for_title:
                 if self.backup_title:
-                    self.temp_block_syntax += f" {self.backup_title}\n"
-                else:
-                    self.temp_block_syntax += "\n"
+                    self.temp_block_syntax += f" {self.backup_title}"
+                self.temp_block_syntax += "\n"
             else:
                 self.temp_block_syntax = ""
 
@@ -237,7 +236,8 @@ class CalloutParser:
             if self.title_from_first_bold and self.look_for_title:
                 self.look_for_title = False
                 block_indent = self.temp_block_syntax.split("\n")[-1].count("\t") + 1
-                title = re.search(rf"^{'\t' * block_indent}\*\*(.+?)\*\*\s*$", line)
+                block_indent = "\t" * block_indent
+                title = re.search(block_indent + r"\*\*(.+?)\*\*\s*$", line)
                 if title:
                     line = f'{self.temp_block_syntax} "{title.group(1).strip()}"'
                 elif self.backup_title:
